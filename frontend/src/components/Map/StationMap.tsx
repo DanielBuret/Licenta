@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMap } from 'react-leaflet';
 import './leaflet-overrides.css';
 import {
   buildClusterIcon,
@@ -190,11 +190,18 @@ export function StationMap({
   const markerRefs = useRef<Map<number, L.Marker>>(new Map());
 
   return (
-    <MapContainer center={ORADEA_CENTER} zoom={DEFAULT_ZOOM} maxZoom={MAX_ZOOM} scrollWheelZoom>
+    <MapContainer
+      center={ORADEA_CENTER}
+      zoom={DEFAULT_ZOOM}
+      maxZoom={MAX_ZOOM}
+      scrollWheelZoom
+      zoomControl={false}
+    >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
+      <ZoomControl position="bottomright" zoomInTitle="Mărește" zoomOutTitle="Micșorează" />
       <FlyToSelected stations={stations} selectedId={selectedId} markerRefs={markerRefs} />
       {userLocation && (
         <Marker

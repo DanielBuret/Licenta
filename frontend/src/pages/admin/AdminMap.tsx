@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, ZoomControl, useMapEvents } from 'react-leaflet';
 import styled from 'styled-components';
 import { useStations } from '../../hooks/useStations';
 import { buildStationIcon, statusFromStation } from '../../components/Map/markerIcons';
@@ -63,11 +63,18 @@ export function AdminMap() {
 
   return (
     <div style={{ height: '100%', position: 'relative' }}>
-      <MapContainer center={ORADEA_CENTER} zoom={13} scrollWheelZoom style={{ height: '100%' }}>
+      <MapContainer
+        center={ORADEA_CENTER}
+        zoom={13}
+        scrollWheelZoom
+        zoomControl={false}
+        style={{ height: '100%' }}
+      >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <ZoomControl position="bottomright" zoomInTitle="Mărește" zoomOutTitle="Micșorează" />
         <ClickHandler onClick={(lat, lon) => setDraft({ latitude: lat, longitude: lon })} />
         {stations.map((s) => (
           <Marker
