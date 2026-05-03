@@ -47,8 +47,10 @@ export const Button = styled.button<{ $variant?: Variant; $full?: boolean; $size
     $variant === 'primary' &&
     css`
       background: ${theme.colors.primary};
-      color: white;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      && {
+        color: white;
+      }
       &:hover:not(:disabled) {
         background: ${theme.colors.primaryHover};
       }
@@ -57,8 +59,10 @@ export const Button = styled.button<{ $variant?: Variant; $full?: boolean; $size
     $variant === 'secondary' &&
     css`
       background: white;
-      color: ${theme.colors.text};
       border-color: ${theme.colors.border};
+      && {
+        color: ${theme.colors.text};
+      }
       &:hover:not(:disabled) {
         background: ${theme.colors.background};
         border-color: ${theme.colors.borderStrong};
@@ -68,8 +72,10 @@ export const Button = styled.button<{ $variant?: Variant; $full?: boolean; $size
     $variant === 'danger' &&
     css`
       background: ${theme.colors.danger};
-      color: white;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      && {
+        color: white;
+      }
       &:hover:not(:disabled) {
         filter: brightness(0.94);
       }
@@ -81,10 +87,14 @@ export const Button = styled.button<{ $variant?: Variant; $full?: boolean; $size
     $variant === 'ghost' &&
     css`
       background: transparent;
-      color: ${theme.colors.textMuted};
+      && {
+        color: ${theme.colors.textMuted};
+      }
       &:hover:not(:disabled) {
         background: ${theme.colors.background};
-        color: ${theme.colors.text};
+        && {
+          color: ${theme.colors.text};
+        }
       }
     `}
 `;
