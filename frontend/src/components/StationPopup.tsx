@@ -43,11 +43,6 @@ const QueueRow = styled.div`
   font-size: 0.8125rem;
 `;
 
-const ButtonRow = styled.div`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing(2)};
-`;
-
 interface Props {
   stationId: number;
   onReserve: (stationId: number) => void;
@@ -126,19 +121,9 @@ export function StationPopup({ stationId, onReserve }: Props) {
         </Button>
       ) : myActive ? (
         myActive.status === 'charging' ? (
-          <ButtonRow>
-            <Button $full onClick={() => finish.mutate(myActive.id)} disabled={finish.isPending}>
-              {finish.isPending ? 'Se termină…' : 'Termină'}
-            </Button>
-            <Button
-              $variant="danger"
-              $full
-              onClick={() => cancel.mutate(myActive.id)}
-              disabled={cancel.isPending}
-            >
-              Anulează
-            </Button>
-          </ButtonRow>
+          <Button $full onClick={() => finish.mutate(myActive.id)} disabled={finish.isPending}>
+            {finish.isPending ? 'Se termină…' : 'Termină'}
+          </Button>
         ) : (
           <Button
             $variant="danger"
