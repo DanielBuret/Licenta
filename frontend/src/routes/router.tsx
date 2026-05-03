@@ -9,7 +9,7 @@ import { SettingsPage } from '../pages/SettingsPage';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AdminRoute } from '../auth/AdminRoute';
 import { AdminLayout } from '../pages/admin/AdminLayout';
-import { AdminMap } from '../pages/admin/AdminMap';
+import { AdminStationsPage } from '../pages/admin/AdminStationsPage';
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
 import { AdminReservationsPage } from '../pages/admin/AdminReservationsPage';
 
@@ -66,8 +66,8 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
     children: [
-      { index: true, element: <AdminMap /> },
-      { path: 'stations', element: <AdminMap /> },
+      { index: true, element: <AdminStationsPage /> },
+      { path: 'stations', element: <AdminStationsPage /> },
       { path: 'users', element: <AdminUsersPage /> },
       { path: 'reservations', element: <AdminReservationsPage /> },
     ],
