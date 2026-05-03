@@ -7,12 +7,13 @@ const Bar = styled.header`
   align-items: center;
   justify-content: space-between;
   padding: ${({ theme }) => `${theme.spacing(3.5)} ${theme.spacing(6)}`};
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
+  background: ${({ theme }) => theme.colors.surface};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   position: relative;
   z-index: 100;
+  /* Promote to its own compositor layer so route transitions don't repaint
+     the header (and don't briefly steal the cursor sprite on macOS). */
+  transform: translateZ(0);
 `;
 
 const Brand = styled(Link)`

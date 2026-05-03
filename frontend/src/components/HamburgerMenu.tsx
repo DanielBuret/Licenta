@@ -30,6 +30,7 @@ const Backdrop = styled.div<{ $open: boolean }>`
   pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
   transition: opacity 180ms ease;
   z-index: 9000;
+  will-change: opacity;
 `;
 
 const Drawer = styled.aside<{ $open: boolean }>`
@@ -41,12 +42,13 @@ const Drawer = styled.aside<{ $open: boolean }>`
   max-width: 92vw;
   background: ${({ theme }) => theme.colors.surface};
   border-left: 1px solid ${({ theme }) => theme.colors.border};
-  transform: translateX(${({ $open }) => ($open ? '0' : '100%')});
+  transform: translate3d(${({ $open }) => ($open ? '0' : '100%')}, 0, 0);
   transition: transform 220ms ease;
   display: flex;
   flex-direction: column;
   z-index: 9001;
   box-shadow: ${({ theme }) => theme.shadow.lg};
+  will-change: transform;
 
   @media (max-width: 900px) {
     width: 100%;
