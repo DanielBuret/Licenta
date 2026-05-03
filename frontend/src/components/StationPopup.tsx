@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { useStationDetail } from '../hooks/useStationDetail';
 import { useAuth } from '../auth/useAuth';
+import { useFinishReservation } from '../hooks/useFinishReservation';
+import { useCancelReservation } from '../hooks/useCancelReservation';
 import { Button } from './ui';
 import { estimateRemainingSeconds, formatDuration } from '../lib/charging';
 
@@ -41,6 +43,11 @@ const QueueRow = styled.div`
   font-size: 0.8125rem;
 `;
 
+const ButtonRow = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+`;
+
 interface Props {
   stationId: number;
   onReserve: (stationId: number) => void;
@@ -49,6 +56,8 @@ interface Props {
 export function StationPopup({ stationId, onReserve }: Props) {
   const { session } = useAuth();
   const { data, isLoading } = useStationDetail(stationId);
+  const finish = useFinishReservation();
+  const cancel = useCancelReservation();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -110,9 +119,30 @@ export function StationPopup({ stationId, onReserve }: Props) {
           Autentificare pentru rezervare
         </Button>
       ) : myActive ? (
-        <Button $variant="secondary" $full disabled>
-          Ai deja o rezervare aici
-        </Button>
+        myActive.status === 'charging' ? (
+          <ButtonRow>
+            <Button $full onClick={() => finish.mutate(myActive.id)} disabled={finish.isPending}>
+              {finish.isPending ? 'Se termină…' : 'Termină'}
+            </Button>
+            <Button
+              $variant="danger"
+              $full
+              onClick={() => cancel.mutate(myActive.id)}
+              disabled={cancel.isPending}
+            >
+              Anulează
+            </Button>
+          </ButtonRow>
+        ) : (
+          <Button
+            $variant="danger"
+            $full
+            onClick={() => cancel.mutate(myActive.id)}
+            disabled={cancel.isPending}
+          >
+            {cancel.isPending ? 'Se anulează…' : 'Anulează rezervarea'}
+          </Button>
+        )
       ) : isFull ? (
         <Button $variant="secondary" $full disabled>
           Stație plină
