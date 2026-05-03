@@ -109,20 +109,28 @@ export function DashboardPage() {
                   <div style={{ fontSize: '0.8125rem', color: '#6b7280' }}>
                     Poziție în coadă: {r.queuePosition} · Baterie start: {r.batteryLevelStart}%
                   </div>
-                  {r.status === 'charging' && r.chargingStartedAt && car && r.station && (
-                    <div style={{ fontSize: '0.8125rem' }}>
-                      Timp rămas:{' '}
-                      {formatDuration(
-                        estimateRemainingSeconds(
-                          car.batteryCapacityKwh,
-                          r.batteryLevelStart,
-                          r.station.powerKw,
-                          r.chargingStartedAt,
-                        ),
-                      )}
-                      <span style={{ visibility: 'hidden' }}>{now}</span>
-                    </div>
-                  )}
+                  {r.status === 'charging' &&
+                    r.chargingStartedAt &&
+                    car &&
+                    r.station &&
+                    (() => {
+                      const remaining = estimateRemainingSeconds(
+                        car.batteryCapacityKwh,
+                        r.batteryLevelStart,
+                        r.station.powerKw,
+                        r.chargingStartedAt,
+                      );
+                      return (
+                        <div style={{ fontSize: '0.8125rem' }}>
+                          {remaining > 0 ? (
+                            <>Timp rămas: {formatDuration(remaining)}</>
+                          ) : (
+                            <>Încărcare completă</>
+                          )}
+                          <span style={{ visibility: 'hidden' }}>{now}</span>
+                        </div>
+                      );
+                    })()}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <StatusPill $status={r.status}>{r.status}</StatusPill>

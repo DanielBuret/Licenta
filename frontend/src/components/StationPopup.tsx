@@ -86,18 +86,24 @@ export function StationPopup({ stationId, onReserve }: Props) {
             </Address>
           )}
           {active.status === 'charging' && active.chargingStartedAt && active.batteryCapacityKwh ? (
-            <Address>
-              Timp rămas:{' '}
-              {formatDuration(
-                estimateRemainingSeconds(
-                  active.batteryCapacityKwh,
-                  active.batteryLevelStart,
-                  data.powerKw,
-                  active.chargingStartedAt,
-                ),
-              )}{' '}
-              <span style={{ visibility: 'hidden' }}>{now}</span>
-            </Address>
+            (() => {
+              const remaining = estimateRemainingSeconds(
+                active.batteryCapacityKwh,
+                active.batteryLevelStart,
+                data.powerKw,
+                active.chargingStartedAt,
+              );
+              return (
+                <Address>
+                  {remaining > 0 ? (
+                    <>Timp rămas: {formatDuration(remaining)}</>
+                  ) : (
+                    <>Încărcare completă</>
+                  )}{' '}
+                  <span style={{ visibility: 'hidden' }}>{now}</span>
+                </Address>
+              );
+            })()
           ) : (
             <Address>Status: rezervat (15s grace)</Address>
           )}
