@@ -1,6 +1,7 @@
 // backend/src/server.ts
 import express from 'express';
 import cors from 'cors';
+import { env } from './config/env.js';
 import { errorMiddleware } from './middleware/error.js';
 import { profileRouter } from './routes/profile.js';
 import { carModelsRouter } from './routes/car-models.js';
@@ -11,7 +12,12 @@ import { adminRouter } from './routes/admin/index.js';
 
 export function buildApp() {
   const app = express();
-  app.use(cors());
+  // CORS_ORIGIN is a comma-separated list of allowed origins in production
+  // (e.g. https://my-app.vercel.app). Falls back to allow-all for local dev.
+  const corsOptions = env.CORS_ORIGIN
+    ? { origin: env.CORS_ORIGIN.split(',').map((s) => s.trim()), credentials: true }
+    : undefined;
+  app.use(cors(corsOptions));
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {

@@ -1,0 +1,38 @@
+# Blueprint for deploying the backend to Render (free tier).
+# https://render.com/docs/blueprint-spec
+#
+# To use: in Render dashboard → New → Blueprint → connect this repo.
+# All env vars below must be filled in via the Render dashboard before deploy.
+services:
+  - type: web
+    name: charging-station-backend
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm install && npm --workspace backend run prisma:generate && npm --workspace backend run build
+    startCommand: npm --workspace backend run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: '20'
+      - key: TIME_SCALE_FACTOR
+        value: '60'
+      - key: PORT
+        value: '4000'
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWKS_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+    healthCheckPath: /api/health
