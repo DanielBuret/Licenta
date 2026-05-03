@@ -8,6 +8,7 @@ import { StationPopup } from '../components/StationPopup';
 import { StationListSidebar } from '../components/StationListSidebar';
 import { AppHeader } from '../components/AppHeader';
 import { ReservationDialog } from '../components/ReservationDialog';
+import { ListIcon, MapIcon } from '../components/icons';
 
 const MOBILE_BREAKPOINT = '900px';
 
@@ -134,7 +135,7 @@ export function HomePage() {
           $active={mobileView === 'list'}
           onClick={() => setMobileView('list')}
         >
-          📋 Listă
+          <ListIcon /> Listă
         </ToggleButton>
         <ToggleButton
           type="button"
@@ -143,7 +144,7 @@ export function HomePage() {
           $active={mobileView === 'map'}
           onClick={() => setMobileView('map')}
         >
-          🗺️ Hartă
+          <MapIcon /> Hartă
         </ToggleButton>
       </ViewToggle>
       <Body>
@@ -165,6 +166,7 @@ export function HomePage() {
             onSelect={setSelected}
             onDeselect={(id) => setSelected((prev) => (prev === id ? null : prev))}
             userLocation={userLoc.location}
+            active={mobileView === 'map'}
             popupContent={(s) => (
               <StationPopup stationId={s.id} onReserve={(id) => setReservingId(id)} />
             )}

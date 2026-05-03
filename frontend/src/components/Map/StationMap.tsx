@@ -28,6 +28,12 @@ interface Props {
   onDeselect: (id: number) => void;
   popupContent: (s: StationListItem) => ReactNode;
   userLocation?: UserLocation | null;
+  /**
+   * When false, the map's container is `display: none` (or otherwise hidden).
+   * Used to force Leaflet to recompute its size when it becomes visible —
+   * otherwise flyTo/openPopup operate on stale dimensions.
+   */
+  active?: boolean;
 }
 
 interface Cluster {
@@ -77,29 +83,94 @@ function FlyToSelected({
   stations,
   selectedId,
   markerRefs,
+  active,
 }: {
   stations: StationListItem[];
   selectedId: number | null;
   markerRefs: React.MutableRefObject<Map<number, L.Marker>>;
+  active: boolean;
 }) {
   const map = useMap();
   useEffect(() => {
+    if (!active) return;
     if (selectedId == null) return;
     const s = stations.find((x) => x.id === selectedId);
     if (!s) return;
-    const targetZoom = Math.max(map.getZoom(), 10);
+    // If the map was just revealed (mobile list → map switch), Leaflet's
+    // cached dimensions may still be stale. Refresh before flying so the
+    // target lands centered and the popup anchors correctly.
+    map.invalidateSize({ animate: false });
+    const targetZoom = Math.max(map.getZoom(), 17);
     map.flyTo([s.latitude, s.longitude], targetZoom, { duration: 0.5 });
-    const open = () => {
-      window.setTimeout(() => {
-        const marker = markerRefs.current.get(selectedId);
-        if (marker) marker.openPopup();
-      }, 50);
+
+    let cancelled = false;
+    let attempts = 0;
+    let escalated = false;
+    let pollId: number | null = null;
+
+    const tryOpen = (): boolean => {
+      const marker = markerRefs.current.get(selectedId);
+      if (marker) {
+        marker.openPopup();
+        return true;
+      }
+      return false;
     };
-    map.once('moveend', open);
+
+    const startPolling = () => {
+      const tick = () => {
+        if (cancelled) return;
+        attempts += 1;
+        if (tryOpen()) return;
+        // After ~600ms, if the station is still in a cluster, push the zoom
+        // one notch closer to break it apart. Fires once.
+        if (attempts === 8 && !escalated) {
+          escalated = true;
+          const next = Math.min(MAX_ZOOM, map.getZoom() + 1);
+          if (next > map.getZoom()) {
+            map.flyTo([s.latitude, s.longitude], next, { duration: 0.4 });
+          }
+        }
+        if (attempts < 20) {
+          pollId = window.setTimeout(tick, 80);
+        }
+      };
+      tick();
+    };
+
+    map.once('moveend', startPolling);
     return () => {
-      map.off('moveend', open);
+      cancelled = true;
+      map.off('moveend', startPolling);
+      if (pollId != null) window.clearTimeout(pollId);
     };
-  }, [selectedId, stations, map, markerRefs]);
+  }, [selectedId, stations, map, markerRefs, active]);
+  return null;
+}
+
+/**
+ * Calls map.invalidateSize whenever the map becomes visible, so clustering
+ * (which relies on container pixel coordinates) and flyTo work correctly
+ * after a display:none → display:block transition.
+ */
+function VisibilitySync({ active }: { active: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!active) return;
+    // Two rAFs: let layout settle (mobile media-query toggle) then invalidate.
+    const r1 = window.requestAnimationFrame(() => {
+      const r2 = window.requestAnimationFrame(() => {
+        map.invalidateSize({ animate: false });
+      });
+      // store inner id on outer closure for cleanup
+      (window as unknown as { __stationMapVizR2?: number }).__stationMapVizR2 = r2;
+    });
+    return () => {
+      window.cancelAnimationFrame(r1);
+      const r2 = (window as unknown as { __stationMapVizR2?: number }).__stationMapVizR2;
+      if (r2) window.cancelAnimationFrame(r2);
+    };
+  }, [active, map]);
   return null;
 }
 
@@ -110,6 +181,7 @@ function MarkersLayer({
   onDeselect,
   popupContent,
   markerRefs,
+  active,
 }: {
   stations: StationListItem[];
   selectedId: number | null;
@@ -117,6 +189,7 @@ function MarkersLayer({
   onDeselect: (id: number) => void;
   popupContent: (s: StationListItem) => ReactNode;
   markerRefs: React.MutableRefObject<Map<number, L.Marker>>;
+  active: boolean;
 }) {
   const map = useMap();
   const [clusters, setClusters] = useState<Cluster[]>([]);
@@ -126,10 +199,22 @@ function MarkersLayer({
     const recompute = () => setClusters(clusterStations(stations, map));
     recompute();
     map.on('zoomend', recompute);
+    map.on('moveend', recompute);
     return () => {
       map.off('zoomend', recompute);
+      map.off('moveend', recompute);
     };
   }, [stations, map]);
+
+  // Recompute clusters once the map becomes visible (its container pixel
+  // coordinates change). Without this, clusters retain pre-reveal positions.
+  useEffect(() => {
+    if (!active) return;
+    const id = window.setTimeout(() => {
+      setClusters(clusterStations(stations, map));
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [active, stations, map]);
 
   // Re-open popup after clusters recompute (e.g. on zoom) if selection survives as a single marker.
   useEffect(() => {
@@ -203,6 +288,7 @@ export function StationMap({
   onDeselect,
   popupContent,
   userLocation,
+  active = true,
 }: Props) {
   const markerRefs = useRef<Map<number, L.Marker>>(new Map());
 
@@ -219,7 +305,13 @@ export function StationMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <ZoomControl position="bottomright" zoomInTitle="Mărește" zoomOutTitle="Micșorează" />
-      <FlyToSelected stations={stations} selectedId={selectedId} markerRefs={markerRefs} />
+      <VisibilitySync active={active} />
+      <FlyToSelected
+        stations={stations}
+        selectedId={selectedId}
+        markerRefs={markerRefs}
+        active={active}
+      />
       {userLocation && (
         <Marker
           position={[userLocation.lat, userLocation.lon]}
@@ -235,6 +327,7 @@ export function StationMap({
         onDeselect={onDeselect}
         popupContent={popupContent}
         markerRefs={markerRefs}
+        active={active}
       />
     </MapContainer>
   );
