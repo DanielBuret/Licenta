@@ -1,9 +1,6 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/useAuth';
-import { useProfile } from '../hooks/useProfile';
-import { supabase } from '../lib/supabase';
-import { Button } from './ui';
+import { HamburgerMenu } from './HamburgerMenu';
 
 const Bar = styled.header`
   display: flex;
@@ -20,42 +17,11 @@ const Brand = styled(Link)`
   color: ${({ theme }) => theme.colors.text};
 `;
 
-const Right = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing(3)};
-`;
-
 export function AppHeader() {
-  const { session, user } = useAuth();
-  const { data: profile } = useProfile(!!session);
-
-  async function signOut() {
-    await supabase.auth.signOut();
-  }
-
   return (
     <Bar>
       <Brand to="/">⚡ Charging Station Oradea</Brand>
-      <Right>
-        {session ? (
-          <>
-            <Link to="/dashboard">Dashboard</Link>
-            {profile?.role === 'admin' && <Link to="/admin">Admin</Link>}
-            <span>{user?.email}</span>
-            <Button $variant="secondary" onClick={signOut}>
-              Deconectare
-            </Button>
-          </>
-        ) : (
-          <>
-            <Link to="/login">Autentificare</Link>
-            <Button as={Link as any} to="/register">
-              Cont nou
-            </Button>
-          </>
-        )}
-      </Right>
+      <HamburgerMenu />
     </Bar>
   );
 }
