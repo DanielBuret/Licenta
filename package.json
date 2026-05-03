@@ -1,0 +1,25 @@
+{
+  "name": "charging-station",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build:shared": "npm --workspace shared run build",
+    "dev:backend": "npm --workspace backend run dev",
+    "test": "npm --workspaces --if-present run test",
+    "lint": "npm --workspaces --if-present run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
