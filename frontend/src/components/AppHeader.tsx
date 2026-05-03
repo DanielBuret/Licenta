@@ -11,9 +11,6 @@ const Bar = styled.header`
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   position: relative;
   z-index: 100;
-  /* Promote to its own compositor layer so route transitions don't repaint
-     the header (and don't briefly steal the cursor sprite on macOS). */
-  transform: translateZ(0);
 `;
 
 const Brand = styled(Link)`

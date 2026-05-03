@@ -11,7 +11,10 @@ export const GlobalStyle = createGlobalStyle`
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
+    /* text-rendering: optimizeLegibility forces ligature/kerning checks on
+       every paint and is a known cursor-flicker culprit on macOS Chrome
+       when combined with frequent re-renders (1Hz charging timer, etc.). */
+    cursor: default;
   }
   button { font: inherit; cursor: pointer; }
   input, select, textarea { font: inherit; }
