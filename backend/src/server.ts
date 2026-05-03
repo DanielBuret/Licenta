@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { errorMiddleware } from './middleware/error.js';
 import { profileRouter } from './routes/profile.js';
+import { carModelsRouter } from './routes/car-models.js';
 
 export function buildApp() {
   const app = express();
@@ -14,6 +15,7 @@ export function buildApp() {
   });
 
   app.use('/api/profile', profileRouter);
+  app.use('/api/car-models', carModelsRouter);
 
   app.use(errorMiddleware);
   return app;
