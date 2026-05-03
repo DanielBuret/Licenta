@@ -1,6 +1,13 @@
 // backend/src/config/env.ts
-import 'dotenv/config';
+import { config as loadDotenv } from 'dotenv';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { z } from 'zod';
+
+// Workspace cwd is `backend/`, but the repo's `.env` lives at the monorepo root.
+// Resolve relative to this file so dev/test/start all find the same config.
+const here = dirname(fileURLToPath(import.meta.url));
+loadDotenv({ path: resolve(here, '../../../.env') });
 
 const Schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
