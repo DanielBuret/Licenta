@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
+import { useProfile } from '../hooks/useProfile';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui';
 
@@ -27,6 +28,7 @@ const Right = styled.div`
 
 export function AppHeader() {
   const { session, user } = useAuth();
+  const { data: profile } = useProfile(!!session);
 
   async function signOut() {
     await supabase.auth.signOut();
@@ -39,6 +41,7 @@ export function AppHeader() {
         {session ? (
           <>
             <Link to="/dashboard">Dashboard</Link>
+            {profile?.role === 'admin' && <Link to="/admin">Admin</Link>}
             <span>{user?.email}</span>
             <Button $variant="secondary" onClick={signOut}>
               Deconectare
