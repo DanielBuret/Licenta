@@ -57,11 +57,12 @@ const ToggleButton = styled.button<{ $active: boolean }>`
     color 120ms ease;
 `;
 
-const Body = styled.div`
+const Body = styled.div<{ $sidebarCollapsed: boolean }>`
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: ${({ $sidebarCollapsed }) => ($sidebarCollapsed ? '52px' : '360px')} 1fr;
   min-height: 0;
   min-width: 0;
+  transition: grid-template-columns 220ms ease;
 
   @media (max-width: ${MOBILE_BREAKPOINT}) {
     grid-template-columns: 1fr;
@@ -111,6 +112,7 @@ export function HomePage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [reservingId, setReservingId] = useState<number | null>(null);
   const [mobileView, setMobileView] = useState<'list' | 'map'>('map');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   function isMobile() {
     return (
@@ -147,7 +149,7 @@ export function HomePage() {
           <MapIcon /> Hartă
         </ToggleButton>
       </ViewToggle>
-      <Body>
+      <Body $sidebarCollapsed={sidebarCollapsed}>
         <SidebarSlot $mobileHidden={mobileView !== 'list'}>
           <StationListSidebar
             stations={stations}
@@ -156,6 +158,8 @@ export function HomePage() {
             userLocation={userLoc.location}
             locationLoading={userLoc.loading}
             locationError={userLoc.error}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
           />
         </SidebarSlot>
         <MapSlot $mobileHidden={mobileView !== 'map'}>

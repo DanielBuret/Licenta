@@ -20,6 +20,53 @@ const Wrap = styled.aside`
   overflow: hidden;
 `;
 
+const Rail = styled.aside`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: ${({ theme }) => theme.colors.surface};
+  border-right: 1px solid ${({ theme }) => theme.colors.border};
+  width: 100%;
+  height: 100%;
+  padding: ${({ theme }) => theme.spacing(3)} 0;
+`;
+
+const RailButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.textMuted};
+  cursor: pointer;
+  transition:
+    background ${({ theme }) => theme.transitions.fast},
+    color ${({ theme }) => theme.transitions.fast},
+    border-color ${({ theme }) => theme.transitions.fast};
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: ${({ theme }) => theme.shadow.ring};
+  }
+`;
+
+const RailCount = styled.span`
+  margin-top: ${({ theme }) => theme.spacing(2)};
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.textMuted};
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  letter-spacing: 0.04em;
+`;
+
 const Header = styled.div`
   padding: ${({ theme }) => theme.spacing(4)};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
@@ -242,6 +289,8 @@ interface Props {
   userLocation: UserLocation | null;
   locationLoading: boolean;
   locationError: string | null;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 function statusFor(s: {
@@ -260,9 +309,10 @@ export function StationListSidebar({
   userLocation,
   locationLoading,
   locationError,
+  collapsed,
+  onToggleCollapse,
 }: Props) {
   const [search, setSearch] = useState('');
-  const [collapsed, setCollapsed] = useState(false);
   const itemRefs = useRef<Map<number, HTMLLIElement>>(new Map());
   const { user } = useAuth();
   const { set: favoriteIds } = useFavorites();
@@ -298,6 +348,35 @@ export function StationListSidebar({
       });
   }, [stations, search, origin.lat, origin.lon, favoriteIds]);
 
+  if (collapsed) {
+    return (
+      <Rail>
+        <RailButton
+          type="button"
+          aria-label="Extinde lista"
+          aria-expanded={false}
+          title="Extinde lista"
+          onClick={onToggleCollapse}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
+        </RailButton>
+        <RailCount>Stații · {stations.length}</RailCount>
+      </Rail>
+    );
+  }
+
   return (
     <Wrap>
       <Header>
@@ -314,11 +393,11 @@ export function StationListSidebar({
           </div>
           <CollapseButton
             type="button"
-            $collapsed={collapsed}
-            aria-label={collapsed ? 'Extinde lista' : 'Restrânge lista'}
-            aria-expanded={!collapsed}
-            title={collapsed ? 'Extinde lista' : 'Restrânge lista'}
-            onClick={() => setCollapsed((v) => !v)}
+            $collapsed={false}
+            aria-label="Restrânge lista"
+            aria-expanded
+            title="Restrânge lista"
+            onClick={onToggleCollapse}
           >
             <svg
               width="14"
@@ -331,88 +410,84 @@ export function StationListSidebar({
               strokeLinejoin="round"
               aria-hidden
             >
-              <polyline points="18 15 12 9 6 15" />
+              <polyline points="15 18 9 12 15 6" />
             </svg>
           </CollapseButton>
         </HeaderTopRow>
-        {!collapsed && (
-          <Input
-            type="search"
-            placeholder="Caută stație după nume sau adresă…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        )}
+        <Input
+          type="search"
+          placeholder="Caută stație după nume sau adresă…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </Header>
-      {!collapsed && locationError && !locationLoading && !userLocation && (
+      {locationError && !locationLoading && !userLocation && (
         <Notice>Locația nu e disponibilă: {locationError}</Notice>
       )}
-      {!collapsed && (
-        <List>
-          {visible.length === 0 ? (
-            <Empty>
-              {search ? 'Nicio stație nu se potrivește.' : 'Nu există stații înregistrate.'}
-            </Empty>
-          ) : (
-            visible.map((s) => {
-              const status = statusFor(s);
-              const directionsHref = googleMapsDirections(
-                s.latitude,
-                s.longitude,
-                userLocation?.lat,
-                userLocation?.lon,
-              );
-              return (
-                <Item
-                  key={s.id}
-                  ref={(el) => {
-                    if (el) itemRefs.current.set(s.id, el);
-                    else itemRefs.current.delete(s.id);
-                  }}
-                  $selected={s.id === selectedId}
-                  onClick={() => onSelect(s.id)}
-                >
-                  <TopRow>
-                    <NameWrap>
-                      <Dot $status={status} />
-                      <Name>{s.name}</Name>
-                    </NameWrap>
-                    {user && (
-                      <FavButton
-                        type="button"
-                        $active={s.__isFavorite}
-                        aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                        title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
-                        }}
-                      >
-                        {s.__isFavorite ? '★' : '☆'}
-                      </FavButton>
-                    )}
-                  </TopRow>
-                  <Address>{s.address}</Address>
-                  <MetaRow>
-                    <Power>{s.powerKw} kW</Power>
-                    <DirectionsGroup>
-                      {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
-                      <DirectionsLink
-                        href={directionsHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Google Maps ↗
-                      </DirectionsLink>
-                    </DirectionsGroup>
-                  </MetaRow>
-                </Item>
-              );
-            })
-          )}
-        </List>
-      )}
+      <List>
+        {visible.length === 0 ? (
+          <Empty>
+            {search ? 'Nicio stație nu se potrivește.' : 'Nu există stații înregistrate.'}
+          </Empty>
+        ) : (
+          visible.map((s) => {
+            const status = statusFor(s);
+            const directionsHref = googleMapsDirections(
+              s.latitude,
+              s.longitude,
+              userLocation?.lat,
+              userLocation?.lon,
+            );
+            return (
+              <Item
+                key={s.id}
+                ref={(el) => {
+                  if (el) itemRefs.current.set(s.id, el);
+                  else itemRefs.current.delete(s.id);
+                }}
+                $selected={s.id === selectedId}
+                onClick={() => onSelect(s.id)}
+              >
+                <TopRow>
+                  <NameWrap>
+                    <Dot $status={status} />
+                    <Name>{s.name}</Name>
+                  </NameWrap>
+                  {user && (
+                    <FavButton
+                      type="button"
+                      $active={s.__isFavorite}
+                      aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
+                      }}
+                    >
+                      {s.__isFavorite ? '★' : '☆'}
+                    </FavButton>
+                  )}
+                </TopRow>
+                <Address>{s.address}</Address>
+                <MetaRow>
+                  <Power>{s.powerKw} kW</Power>
+                  <DirectionsGroup>
+                    {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
+                    <DirectionsLink
+                      href={directionsHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Google Maps ↗
+                    </DirectionsLink>
+                  </DirectionsGroup>
+                </MetaRow>
+              </Item>
+            );
+          })
+        )}
+      </List>
     </Wrap>
   );
 }
