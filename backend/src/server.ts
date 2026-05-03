@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import { errorMiddleware } from './middleware/error.js';
+import { profileRouter } from './routes/profile.js';
 
 export function buildApp() {
   const app = express();
@@ -12,9 +13,7 @@ export function buildApp() {
     res.json({ status: 'ok', uptime: process.uptime() });
   });
 
-  // Routers will be mounted here in later tasks
-  // app.use('/api/profile', profileRouter);
-  // ...
+  app.use('/api/profile', profileRouter);
 
   app.use(errorMiddleware);
   return app;
