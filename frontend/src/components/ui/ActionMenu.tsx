@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 
 export interface ActionItem {
@@ -14,8 +15,9 @@ interface Props {
   align?: 'left' | 'right';
 }
 
+const MENU_MIN_WIDTH = 180;
+
 const Wrap = styled.div`
-  position: relative;
   display: inline-block;
 `;
 
@@ -42,16 +44,14 @@ const Caret = styled.span`
   color: ${({ theme }) => theme.colors.textMuted};
 `;
 
-const Menu = styled.div<{ $align: 'left' | 'right' }>`
-  position: absolute;
-  top: calc(100% + 4px);
-  ${({ $align }) => ($align === 'right' ? 'right: 0;' : 'left: 0;')}
-  min-width: 160px;
+const Menu = styled.div`
+  position: fixed;
+  min-width: ${MENU_MIN_WIDTH}px;
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.md};
   box-shadow: ${({ theme }) => theme.shadow.md};
-  z-index: 100;
+  z-index: 2000;
   padding: ${({ theme }) => theme.spacing(1)};
   display: flex;
   flex-direction: column;
@@ -81,12 +81,45 @@ const MenuItem = styled.button<{ $variant: 'default' | 'danger' }>`
 
 export function ActionMenu({ items, triggerLabel = 'Acțiuni', align = 'right' }: Props) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+    function recompute() {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const menuWidth = menuRef.current?.offsetWidth ?? MENU_MIN_WIDTH;
+      const top = rect.bottom + 4;
+      const left = align === 'right' ? rect.right - menuWidth : rect.left;
+      const clampedLeft = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+      setPos({ top, left: clampedLeft });
+    }
+    recompute();
+    window.addEventListener('resize', recompute);
+    window.addEventListener('scroll', recompute, true);
+    return () => {
+      window.removeEventListener('resize', recompute);
+      window.removeEventListener('scroll', recompute, true);
+    };
+  }, [open, align]);
 
   useEffect(() => {
     if (!open) return;
     function onMouseDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (
+        (triggerRef.current && triggerRef.current.contains(target)) ||
+        (menuRef.current && menuRef.current.contains(target))
+      ) {
+        return;
+      }
+      setOpen(false);
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false);
@@ -100,8 +133,9 @@ export function ActionMenu({ items, triggerLabel = 'Acțiuni', align = 'right' }
   }, [open]);
 
   return (
-    <Wrap ref={ref}>
+    <Wrap>
       <Trigger
+        ref={triggerRef}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
@@ -113,25 +147,33 @@ export function ActionMenu({ items, triggerLabel = 'Acțiuni', align = 'right' }
         {triggerLabel}
         <Caret>▾</Caret>
       </Trigger>
-      {open && (
-        <Menu $align={align} role="menu">
-          {items.map((it, i) => (
-            <MenuItem
-              key={i}
-              type="button"
-              role="menuitem"
-              $variant={it.variant ?? 'default'}
-              disabled={it.disabled}
-              onClick={() => {
-                setOpen(false);
-                it.onClick();
-              }}
-            >
-              {it.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      )}
+      {open &&
+        pos &&
+        createPortal(
+          <Menu
+            ref={menuRef}
+            role="menu"
+            style={{ top: pos.top, left: pos.left }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items.map((it, i) => (
+              <MenuItem
+                key={i}
+                type="button"
+                role="menuitem"
+                $variant={it.variant ?? 'default'}
+                disabled={it.disabled}
+                onClick={() => {
+                  setOpen(false);
+                  it.onClick();
+                }}
+              >
+                {it.label}
+              </MenuItem>
+            ))}
+          </Menu>,
+          document.body,
+        )}
     </Wrap>
   );
 }
