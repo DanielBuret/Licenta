@@ -3,8 +3,9 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { useEffect, useRef } from 'react';
 import type L from 'leaflet';
 import './leaflet-overrides.css';
-import { buildStationIcon, statusFromStation } from './markerIcons';
+import { buildStationIcon, buildUserLocationIcon, statusFromStation } from './markerIcons';
 import type { StationListItem } from '../../hooks/useStations';
+import type { UserLocation } from '../../hooks/useUserLocation';
 
 const ORADEA_CENTER: [number, number] = [47.0722, 21.9211];
 const DEFAULT_ZOOM = 13;
@@ -14,6 +15,7 @@ interface Props {
   selectedId: number | null;
   onSelect: (id: number) => void;
   popupContent: (s: StationListItem) => ReactNode;
+  userLocation?: UserLocation | null;
 }
 
 function FlyToSelected({
@@ -42,7 +44,7 @@ function FlyToSelected({
   return null;
 }
 
-export function StationMap({ stations, selectedId, onSelect, popupContent }: Props) {
+export function StationMap({ stations, selectedId, onSelect, popupContent, userLocation }: Props) {
   const markerRefs = useRef<Map<number, L.Marker>>(new Map());
 
   return (
@@ -52,6 +54,14 @@ export function StationMap({ stations, selectedId, onSelect, popupContent }: Pro
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FlyToSelected stations={stations} selectedId={selectedId} markerRefs={markerRefs} />
+      {userLocation && (
+        <Marker
+          position={[userLocation.lat, userLocation.lon]}
+          icon={buildUserLocationIcon()}
+          interactive={false}
+          keyboard={false}
+        />
+      )}
       {stations.map((s) => (
         <Marker
           key={s.id}

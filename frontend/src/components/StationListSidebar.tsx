@@ -5,6 +5,8 @@ import type { UserLocation } from '../hooks/useUserLocation';
 import { Input } from './ui';
 import { formatDistance, googleMapsDirections, haversineKm } from '../lib/distance';
 
+const ORADEA_CENTER = { lat: 47.0722, lon: 21.9211 };
+
 const Wrap = styled.aside`
   display: flex;
   flex-direction: column;
@@ -178,27 +180,25 @@ export function StationListSidebar({
 }: Props) {
   const [search, setSearch] = useState('');
 
+  const origin: { lat: number; lon: number; approximate: boolean } = userLocation
+    ? { lat: userLocation.lat, lon: userLocation.lon, approximate: false }
+    : { lat: ORADEA_CENTER.lat, lon: ORADEA_CENTER.lon, approximate: true };
+
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = q
+    const filtered = q
       ? stations.filter(
           (s) => s.name.toLowerCase().includes(q) || s.address.toLowerCase().includes(q),
         )
       : stations.slice();
 
-    if (userLocation) {
-      list = list
-        .map((s) => ({
-          station: s,
-          distanceKm: haversineKm(userLocation.lat, userLocation.lon, s.latitude, s.longitude),
-        }))
-        .sort((a, b) => a.distanceKm - b.distanceKm)
-        .map((entry) => Object.assign(entry.station, { __distanceKm: entry.distanceKm }));
-    } else {
-      list = list.slice().sort((a, b) => a.name.localeCompare(b.name, 'ro'));
-    }
-    return list as Array<StationListItem & { __distanceKm?: number }>;
-  }, [stations, search, userLocation]);
+    return filtered
+      .map((s) => ({
+        ...s,
+        __distanceKm: haversineKm(origin.lat, origin.lon, s.latitude, s.longitude),
+      }))
+      .sort((a, b) => a.__distanceKm - b.__distanceKm);
+  }, [stations, search, origin.lat, origin.lon]);
 
   return (
     <Wrap>
@@ -209,7 +209,7 @@ export function StationListSidebar({
             ? 'Detectez locația ta…'
             : userLocation
               ? 'Sortate după distanța față de tine'
-              : 'Sortate alfabetic (locația indisponibilă)'}
+              : 'Sortate aproximativ după distanța de centrul Oradei'}
         </HeaderSubtitle>
         <Input
           type="search"
@@ -242,7 +242,10 @@ export function StationListSidebar({
                     <Dot $status={status} />
                     <Name>{s.name}</Name>
                   </NameWrap>
-                  {s.__distanceKm != null && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
+                  <Distance>
+                    {origin.approximate ? '~' : ''}
+                    {formatDistance(s.__distanceKm)}
+                  </Distance>
                 </TopRow>
                 <Address>{s.address}</Address>
                 <MetaRow>
@@ -253,7 +256,7 @@ export function StationListSidebar({
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    Drum cu Google Maps ↗
+                    Google Maps ↗
                   </DirectionsLink>
                 </MetaRow>
               </Item>

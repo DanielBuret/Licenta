@@ -38,3 +38,19 @@ export function statusFromStation(s: { hasCharging: boolean; hasReserved: boolea
   if (s.hasReserved) return 'reserved';
   return 'free';
 }
+
+const USER_DOT_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="11" fill="rgba(37, 99, 235, 0.18)"/>
+    <circle cx="12" cy="12" r="6" fill="#2563eb" stroke="white" stroke-width="3"/>
+  </svg>`;
+
+export function buildUserLocationIcon(): L.DivIcon {
+  return L.divIcon({
+    html: USER_DOT_SVG,
+    className: 'user-location-marker',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12],
+  });
+}
