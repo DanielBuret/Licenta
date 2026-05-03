@@ -1,5 +1,5 @@
 // backend/src/services/reservation-service.ts
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../prisma/generated/index.js';
 import { prisma } from '../lib/prisma.js';
 import { conflict, badRequest, forbidden, notFound } from '../lib/errors.js';
 

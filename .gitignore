@@ -37,3 +37,4 @@ docs/
 # Prisma
 *.db
 *.db-journal
+backend/prisma/generated/

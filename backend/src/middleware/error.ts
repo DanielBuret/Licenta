@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../prisma/generated/index.js';
 import { HttpError } from '../lib/errors.js';
 
 // 4-arg signature is required by Express to identify this as the error handler.
