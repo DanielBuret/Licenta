@@ -66,6 +66,16 @@ VALUES ('Lotus Center', 'Strada Nufărului', 47.058, 21.939, 50);
 
 Refresh the home page; the green pin appears.
 
+### Admin panel
+
+Promote a user to admin via SQL:
+
+```sql
+UPDATE profiles SET role='admin' WHERE email='you@example.com';
+```
+
+After re-login, an "Admin" link appears in the header. Visit `/admin/stations` to add/edit/delete stations on the map. Click an empty area to add a station; the address is auto-filled from Nominatim. Click an existing pin for Edit/Delete. `/admin/users` and `/admin/reservations` list all users and reservations (with a status filter on reservations).
+
 ### Realtime publication
 
 Phase 2 relies on Supabase Realtime. In Supabase Dashboard → Database → Replication, ensure both `reservations` and `stations` are part of the `supabase_realtime` publication. If not:
