@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import type L from 'leaflet';
 import './leaflet-overrides.css';
 import { buildStationIcon, statusFromStation } from './markerIcons';
 import type { StationListItem } from '../../hooks/useStations';
@@ -18,9 +19,11 @@ interface Props {
 function FlyToSelected({
   stations,
   selectedId,
+  markerRefs,
 }: {
   stations: StationListItem[];
   selectedId: number | null;
+  markerRefs: React.MutableRefObject<Map<number, L.Marker>>;
 }) {
   const map = useMap();
   useEffect(() => {
@@ -28,18 +31,27 @@ function FlyToSelected({
     const s = stations.find((x) => x.id === selectedId);
     if (!s) return;
     map.flyTo([s.latitude, s.longitude], Math.max(map.getZoom(), 15), { duration: 0.5 });
-  }, [selectedId, stations, map]);
+    const marker = markerRefs.current.get(selectedId);
+    if (marker) {
+      const open = () => marker.openPopup();
+      const t = window.setTimeout(open, 550);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, [selectedId, stations, map, markerRefs]);
   return null;
 }
 
 export function StationMap({ stations, selectedId, onSelect, popupContent }: Props) {
+  const markerRefs = useRef<Map<number, L.Marker>>(new Map());
+
   return (
     <MapContainer center={ORADEA_CENTER} zoom={DEFAULT_ZOOM} scrollWheelZoom>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <FlyToSelected stations={stations} selectedId={selectedId} />
+      <FlyToSelected stations={stations} selectedId={selectedId} markerRefs={markerRefs} />
       {stations.map((s) => (
         <Marker
           key={s.id}
@@ -49,6 +61,10 @@ export function StationMap({ stations, selectedId, onSelect, popupContent }: Pro
             s.activeReservations > 0 ? s.activeReservations : undefined,
           )}
           eventHandlers={{ click: () => onSelect(s.id) }}
+          ref={(instance) => {
+            if (instance) markerRefs.current.set(s.id, instance);
+            else markerRefs.current.delete(s.id);
+          }}
         >
           <Popup>{popupContent(s)}</Popup>
         </Marker>
