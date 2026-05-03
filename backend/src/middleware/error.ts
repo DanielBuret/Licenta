@@ -19,13 +19,23 @@ export function errorMiddleware(err: unknown, _req: Request, res: Response, _nex
       error: { code: err.code, message: err.message, details: err.details },
     });
   }
-  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-    return res.status(409).json({
-      error: {
-        code: 'conflict',
-        message: 'Resource already exists or conflicts with an active record',
-      },
-    });
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({
+        error: {
+          code: 'conflict',
+          message: 'Resource already exists or conflicts with an active record',
+        },
+      });
+    }
+    if (err.code === 'P2003') {
+      return res.status(409).json({
+        error: {
+          code: 'conflict',
+          message: 'Cannot complete operation: related records exist',
+        },
+      });
+    }
   }
   console.error('Unhandled error', err);
   return res.status(500).json({ error: { code: 'internal', message: 'Internal server error' } });

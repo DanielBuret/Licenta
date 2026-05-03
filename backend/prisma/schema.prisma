@@ -63,7 +63,7 @@ model Reservation {
   chargingStartedAt  DateTime? @map("charging_started_at") @db.Timestamptz()
   chargingEndedAt    DateTime? @map("charging_ended_at") @db.Timestamptz()
 
-  station Station @relation(fields: [stationId], references: [id], onDelete: Restrict)
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
   user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("reservations")
