@@ -165,6 +165,13 @@ const Power = styled.span`
   color: ${({ theme }) => theme.colors.textMuted};
 `;
 
+const DirectionsGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(2)};
+  flex-shrink: 0;
+`;
+
 const DirectionsLink = styled.a`
   display: inline-flex;
   align-items: center;
@@ -301,25 +308,6 @@ export function StationListSidebar({
                     <Dot $status={status} />
                     <Name>{s.name}</Name>
                   </NameWrap>
-                  {user && (
-                    <FavButton
-                      type="button"
-                      $active={s.__isFavorite}
-                      aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                      title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
-                      }}
-                    >
-                      {s.__isFavorite ? '★' : '☆'}
-                    </FavButton>
-                  )}
-                  {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
-                </TopRow>
-                <Address>{s.address}</Address>
-                <MetaRow>
-                  <Power>{s.powerKw} kW</Power>
                   <DirectionsLink
                     href={directionsHref}
                     target="_blank"
@@ -328,6 +316,27 @@ export function StationListSidebar({
                   >
                     Google Maps ↗
                   </DirectionsLink>
+                </TopRow>
+                <Address>{s.address}</Address>
+                <MetaRow>
+                  <Power>{s.powerKw} kW</Power>
+                  <DirectionsGroup>
+                    {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
+                    {user && (
+                      <FavButton
+                        type="button"
+                        $active={s.__isFavorite}
+                        aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                        title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
+                        }}
+                      >
+                        {s.__isFavorite ? '★' : '☆'}
+                      </FavButton>
+                    )}
+                  </DirectionsGroup>
                 </MetaRow>
               </Item>
             );
