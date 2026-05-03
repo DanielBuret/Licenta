@@ -93,7 +93,7 @@ const Empty = styled.li`
 `;
 
 const Item = styled.li<{ $selected: boolean }>`
-  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
+  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(2)}`};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   cursor: pointer;
   display: flex;
