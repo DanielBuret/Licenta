@@ -9,7 +9,8 @@ const Bar = styled.header`
   padding: ${({ theme }) => `${theme.spacing(3.5)} ${theme.spacing(6)}`};
   background: ${({ theme }) => theme.colors.surface};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 100;
 `;
 
