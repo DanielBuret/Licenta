@@ -129,6 +129,16 @@ function MarkersLayer({
     };
   }, [stations, map]);
 
+  // Re-open popup after clusters recompute (e.g. on zoom) if selection survives as a single marker.
+  useEffect(() => {
+    if (selectedId == null) return;
+    const id = window.setTimeout(() => {
+      const marker = markerRefs.current.get(selectedId);
+      if (marker && !marker.isPopupOpen()) marker.openPopup();
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, [clusters, selectedId, markerRefs]);
+
   return (
     <>
       {clusters.map((c) => {
