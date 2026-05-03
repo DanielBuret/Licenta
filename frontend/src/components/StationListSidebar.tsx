@@ -308,34 +308,34 @@ export function StationListSidebar({
                     <Dot $status={status} />
                     <Name>{s.name}</Name>
                   </NameWrap>
-                  <DirectionsLink
-                    href={directionsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    Google Maps ↗
-                  </DirectionsLink>
+                  {user && (
+                    <FavButton
+                      type="button"
+                      $active={s.__isFavorite}
+                      aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
+                      }}
+                    >
+                      {s.__isFavorite ? '★' : '☆'}
+                    </FavButton>
+                  )}
                 </TopRow>
                 <Address>{s.address}</Address>
                 <MetaRow>
                   <Power>{s.powerKw} kW</Power>
                   <DirectionsGroup>
                     {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
-                    {user && (
-                      <FavButton
-                        type="button"
-                        $active={s.__isFavorite}
-                        aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                        title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
-                        }}
-                      >
-                        {s.__isFavorite ? '★' : '☆'}
-                      </FavButton>
-                    )}
+                    <DirectionsLink
+                      href={directionsHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Google Maps ↗
+                    </DirectionsLink>
                   </DirectionsGroup>
                 </MetaRow>
               </Item>
