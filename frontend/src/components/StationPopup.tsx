@@ -4,6 +4,7 @@ import { useStationDetail } from '../hooks/useStationDetail';
 import { useAuth } from '../auth/useAuth';
 import { useFinishReservation } from '../hooks/useFinishReservation';
 import { useCancelReservation } from '../hooks/useCancelReservation';
+import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
 import { Button } from './ui';
 import { estimateRemainingSeconds, formatDuration } from '../lib/charging';
 import { estimateChargingSeconds } from '@charging-station/shared';
@@ -229,6 +230,7 @@ const IconButton = styled.button`
   transition:
     background 120ms ease,
     border-color 120ms ease,
+    color 120ms ease,
     transform 120ms ease;
   &:hover {
     background: ${({ theme }) => theme.colors.background};
@@ -238,6 +240,21 @@ const IconButton = styled.button`
   &:active {
     transform: scale(0.96);
   }
+`;
+
+const FavoriteButton = styled(IconButton)<{ $active: boolean }>`
+  ${({ $active, theme }) =>
+    $active &&
+    css`
+      color: ${theme.colors.statusReserved};
+      border-color: ${theme.colors.statusReserved}66;
+      background: ${theme.colors.statusReserved}1a;
+      &:hover {
+        color: ${theme.colors.statusReserved};
+        border-color: ${theme.colors.statusReserved};
+        background: ${theme.colors.statusReserved}26;
+      }
+    `}
 `;
 
 interface Props {
@@ -250,6 +267,8 @@ export function StationPopup({ stationId, onReserve }: Props) {
   const { data, isLoading } = useStationDetail(stationId);
   const finish = useFinishReservation();
   const cancel = useCancelReservation();
+  const { set: favoriteIds } = useFavorites();
+  const toggleFav = useToggleFavorite();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -273,6 +292,7 @@ export function StationPopup({ stationId, onReserve }: Props) {
   const statusLabel = displayStatus === 'full' ? 'Plină' : STATUS_LABELS[status];
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.latitude},${data.longitude}`;
+  const isFavorite = favoriteIds.has(stationId);
 
   return (
     <Wrap>
@@ -338,6 +358,18 @@ export function StationPopup({ stationId, onReserve }: Props) {
       )}
 
       <ActionRow>
+        {session && (
+          <FavoriteButton
+            type="button"
+            $active={isFavorite}
+            disabled={toggleFav.isPending}
+            title={isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+            aria-label={isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+            onClick={() => toggleFav.mutate({ stationId, favorite: !isFavorite })}
+          >
+            <StarIcon filled={isFavorite} />
+          </FavoriteButton>
+        )}
         <IconButton
           as="a"
           href={mapsUrl}
@@ -475,6 +507,24 @@ function UserIcon() {
     >
       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
       <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function StarIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   );
 }
