@@ -5,6 +5,7 @@ import { useAuth } from '../auth/useAuth';
 import { useFinishReservation } from '../hooks/useFinishReservation';
 import { useCancelReservation } from '../hooks/useCancelReservation';
 import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
+import { useMyReservations } from '../hooks/useMyReservations';
 import { Button } from './ui';
 import { estimateRemainingSeconds, formatDuration } from '../lib/charging';
 import { estimateChargingSeconds } from '@charging-station/shared';
@@ -269,6 +270,7 @@ export function StationPopup({ stationId, onReserve }: Props) {
   const cancel = useCancelReservation();
   const { set: favoriteIds } = useFavorites();
   const toggleFav = useToggleFavorite();
+  const { data: myReservations = [] } = useMyReservations();
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -293,6 +295,9 @@ export function StationPopup({ stationId, onReserve }: Props) {
 
   const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${data.latitude},${data.longitude}`;
   const isFavorite = favoriteIds.has(stationId);
+  const hasActiveElsewhere = myReservations.some(
+    (r) => (r.status === 'reserved' || r.status === 'charging') && r.stationId !== stationId,
+  );
 
   return (
     <Wrap>
@@ -409,6 +414,18 @@ export function StationPopup({ stationId, onReserve }: Props) {
           disabled={cancel.isPending}
         >
           {cancel.isPending ? 'Se anulează…' : 'Anulează'}
+        </Button>
+      );
+    }
+    if (hasActiveElsewhere) {
+      return (
+        <Button
+          $variant="secondary"
+          $full
+          disabled
+          title="Ai deja o rezervare activă. Anulează-o întâi dacă vrei să rezervi aici."
+        >
+          Rezervă
         </Button>
       );
     }
