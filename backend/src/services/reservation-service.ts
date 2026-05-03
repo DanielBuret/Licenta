@@ -63,13 +63,13 @@ export const reservationService = {
     });
   },
 
-  async cancel(input: { reservationId: bigint | number; callerId: string }) {
+  async cancel(input: { reservationId: bigint | number; callerId: string; asAdmin?: boolean }) {
     const id =
       typeof input.reservationId === 'bigint' ? input.reservationId : BigInt(input.reservationId);
     return prisma.$transaction(async (tx) => {
       const r = await tx.reservation.findUnique({ where: { id } });
       if (!r) throw notFound('Reservation not found');
-      if (r.userId !== input.callerId) throw forbidden('Not the owner');
+      if (!input.asAdmin && r.userId !== input.callerId) throw forbidden('Not the owner');
       if (r.status === 'completed' || r.status === 'cancelled') {
         throw badRequest('Reservation is already terminal');
       }
@@ -86,13 +86,13 @@ export const reservationService = {
     });
   },
 
-  async finish(input: { reservationId: bigint | number; callerId: string }) {
+  async finish(input: { reservationId: bigint | number; callerId: string; asAdmin?: boolean }) {
     const id =
       typeof input.reservationId === 'bigint' ? input.reservationId : BigInt(input.reservationId);
     return prisma.$transaction(async (tx) => {
       const r = await tx.reservation.findUnique({ where: { id } });
       if (!r) throw notFound('Reservation not found');
-      if (r.userId !== input.callerId) throw forbidden('Not the owner');
+      if (!input.asAdmin && r.userId !== input.callerId) throw forbidden('Not the owner');
       if (r.status !== 'charging') throw badRequest('Reservation is not in charging state');
 
       const updated = await tx.reservation.update({
