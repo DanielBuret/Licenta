@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useStations, type StationListItem } from '../../hooks/useStations';
 import { useDeleteStation, useUpdateStation } from '../../hooks/useAdminStationMutations';
 import { StationFormDialog, type StationFormValues } from './StationFormDialog';
-import { Button, Input } from '../../components/ui';
+import { ActionMenu, Button, Input } from '../../components/ui';
 
 const Container = styled.div`
   padding: ${({ theme }) => theme.spacing(6)};
@@ -202,30 +202,29 @@ export function AdminStationsTable() {
                   </td>
                   <td>{s.activeReservations}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <Actions style={{ justifyContent: 'flex-end' }}>
-                      <SmallButton
-                        $variant="secondary"
-                        onClick={() =>
-                          setEditing({
-                            id: s.id,
-                            name: s.name,
-                            address: s.address,
-                            latitude: s.latitude,
-                            longitude: s.longitude,
-                            powerKw: s.powerKw,
-                          })
-                        }
-                      >
-                        Editează
-                      </SmallButton>
-                      <SmallButton
-                        $variant="danger"
-                        onClick={() => handleDelete(s)}
-                        disabled={remove.isPending}
-                      >
-                        Șterge
-                      </SmallButton>
-                    </Actions>
+                    <ActionMenu
+                      align="right"
+                      items={[
+                        {
+                          label: 'Editează',
+                          onClick: () =>
+                            setEditing({
+                              id: s.id,
+                              name: s.name,
+                              address: s.address,
+                              latitude: s.latitude,
+                              longitude: s.longitude,
+                              powerKw: s.powerKw,
+                            }),
+                        },
+                        {
+                          label: 'Șterge',
+                          variant: 'danger',
+                          disabled: remove.isPending,
+                          onClick: () => handleDelete(s),
+                        },
+                      ]}
+                    />
                   </td>
                 </tr>
               ))
