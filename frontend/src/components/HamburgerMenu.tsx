@@ -47,6 +47,12 @@ const Drawer = styled.aside<{ $open: boolean }>`
   flex-direction: column;
   z-index: 9001;
   box-shadow: ${({ theme }) => theme.shadow.lg};
+
+  @media (max-width: 900px) {
+    width: 100%;
+    max-width: 100%;
+    border-left: none;
+  }
 `;
 
 const Header = styled.div`
