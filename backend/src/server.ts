@@ -5,6 +5,7 @@ import { errorMiddleware } from './middleware/error.js';
 import { profileRouter } from './routes/profile.js';
 import { carModelsRouter } from './routes/car-models.js';
 import { stationsRouter } from './routes/stations.js';
+import { reservationsRouter } from './routes/reservations.js';
 
 export function buildApp() {
   const app = express();
@@ -18,6 +19,7 @@ export function buildApp() {
   app.use('/api/profile', profileRouter);
   app.use('/api/car-models', carModelsRouter);
   app.use('/api/stations', stationsRouter);
+  app.use('/api/reservations', reservationsRouter);
 
   app.use(errorMiddleware);
   return app;
