@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { useStations } from '../hooks/useStations';
+import { useStationsRealtime } from '../hooks/useStationsRealtime';
 import { StationMap } from '../components/Map/StationMap';
 import { StationPopup } from '../components/StationPopup';
 import { AppHeader } from '../components/AppHeader';
@@ -17,6 +18,7 @@ const MapWrap = styled.div`
 `;
 
 export function HomePage() {
+  useStationsRealtime();
   const { data: stations = [] } = useStations();
   const [selected, setSelected] = useState<number | null>(null);
   const [reservingId, setReservingId] = useState<number | null>(null);
