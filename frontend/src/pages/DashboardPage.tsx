@@ -64,7 +64,7 @@ const StatusPill = styled.span<{ $status: string }>`
 `;
 
 export function DashboardPage() {
-  const { data: reservations = [] } = useMyReservations();
+  const { data: reservations = [], isLoading: reservationsLoading } = useMyReservations();
   const finish = useFinishReservation();
   const cancel = useCancelReservation();
   const [now, setNow] = useState(Date.now());
@@ -97,7 +97,9 @@ export function DashboardPage() {
 
         <Section>
           <h2 style={{ marginTop: 0 }}>Rezervări active</h2>
-          {active.length === 0 ? (
+          {reservationsLoading ? (
+            <p>Se încarcă…</p>
+          ) : active.length === 0 ? (
             <p>Nu ai rezervări active.</p>
           ) : (
             active.map((r) => (

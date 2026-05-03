@@ -19,7 +19,7 @@ const MapWrap = styled.div`
 
 export function HomePage() {
   useStationsRealtime();
-  const { data: stations = [] } = useStations();
+  const { data: stations = [], error } = useStations();
   const [selected, setSelected] = useState<number | null>(null);
   const [reservingId, setReservingId] = useState<number | null>(null);
 
@@ -27,6 +27,11 @@ export function HomePage() {
     <Layout>
       <AppHeader />
       <MapWrap>
+        {error && (
+          <div style={{ padding: 16, color: '#dc2626' }}>
+            Nu am putut încărca stațiile. Reîncearcă mai târziu.
+          </div>
+        )}
         <StationMap
           stations={stations}
           selectedId={selected}
