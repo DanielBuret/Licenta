@@ -2,9 +2,10 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { reservationService } from './reservation-service.js';
 import { resetDb, makeUser, makeStation } from '../test/db.js';
+import { prisma } from '../lib/prisma.js';
 
-const ALICE = '00000000-0000-0000-0000-00000000A11C';
-const BOB = '00000000-0000-0000-0000-00000000B0B0';
+const ALICE = '00000000-0000-0000-0000-00000000a11c';
+const BOB = '00000000-0000-0000-0000-00000000b0b0';
 
 describe('reservationService.create', () => {
   beforeAll(async () => {
@@ -47,7 +48,7 @@ describe('reservationService.create', () => {
   it('rejects when station already has 2 active reservations', async () => {
     await makeUser(ALICE);
     await makeUser(BOB);
-    await makeUser('00000000-0000-0000-0000-00000000CCCC', 'C');
+    await makeUser('00000000-0000-0000-0000-00000000cccc', 'C');
     const st = await makeStation();
     await reservationService.create({
       stationId: st.id,
@@ -62,7 +63,7 @@ describe('reservationService.create', () => {
     await expect(
       reservationService.create({
         stationId: st.id,
-        userId: '00000000-0000-0000-0000-00000000CCCC',
+        userId: '00000000-0000-0000-0000-00000000cccc',
         batteryLevelStart: 50,
       }),
     ).rejects.toThrow(/full/i);
@@ -96,5 +97,78 @@ describe('reservationService.create', () => {
         batteryLevelStart: 100,
       }),
     ).rejects.toThrow();
+  });
+});
+
+describe('reservationService.cancel', () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it('cancels own reserved row', async () => {
+    await makeUser(ALICE);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    const after = await reservationService.cancel({
+      reservationId: r.id,
+      callerId: ALICE,
+    });
+    expect(after.status).toBe('cancelled');
+  });
+
+  it('promotes queue_position=2 to 1 when active row is cancelled', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    const st = await makeStation();
+    const a = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    const b = await reservationService.create({
+      stationId: st.id,
+      userId: BOB,
+      batteryLevelStart: 30,
+    });
+    await reservationService.cancel({ reservationId: a.id, callerId: ALICE });
+    const refreshed = await prisma.reservation.findUnique({
+      where: { id: b.id },
+    });
+    expect(refreshed?.queuePosition).toBe(1);
+    expect(refreshed?.status).toBe('reserved');
+    // reservedAt should have been updated to start a fresh grace
+    expect(refreshed!.reservedAt.getTime()).toBeGreaterThanOrEqual(b.reservedAt.getTime());
+  });
+
+  it('rejects when caller is not the owner', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await expect(reservationService.cancel({ reservationId: r.id, callerId: BOB })).rejects.toThrow(
+      /not the owner|forbidden/i,
+    );
+  });
+
+  it('rejects already terminal rows', async () => {
+    await makeUser(ALICE);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await reservationService.cancel({ reservationId: r.id, callerId: ALICE });
+    await expect(
+      reservationService.cancel({ reservationId: r.id, callerId: ALICE }),
+    ).rejects.toThrow(/terminal|already/i);
   });
 });
