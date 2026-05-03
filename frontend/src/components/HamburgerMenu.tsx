@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -28,7 +29,7 @@ const Backdrop = styled.div<{ $open: boolean }>`
   opacity: ${({ $open }) => ($open ? 1 : 0)};
   pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
   transition: opacity 180ms ease;
-  z-index: 1000;
+  z-index: 9000;
 `;
 
 const Drawer = styled.aside<{ $open: boolean }>`
@@ -44,8 +45,8 @@ const Drawer = styled.aside<{ $open: boolean }>`
   transition: transform 220ms ease;
   display: flex;
   flex-direction: column;
-  z-index: 1001;
-  box-shadow: ${({ theme }) => theme.shadow.md};
+  z-index: 9001;
+  box-shadow: ${({ theme }) => theme.shadow.lg};
 `;
 
 const Header = styled.div`
@@ -163,66 +164,71 @@ export function HamburgerMenu() {
         </svg>
       </Trigger>
 
-      <Backdrop $open={open} onClick={() => setOpen(false)} />
-      <Drawer $open={open} aria-hidden={!open}>
-        <Header>
-          <HeaderTitle>Meniu</HeaderTitle>
-          <CloseBtn aria-label="Închide meniul" onClick={() => setOpen(false)}>
-            ×
-          </CloseBtn>
-        </Header>
-        <Body>
-          <Section>Navigare</Section>
-          <Item to="/" $active={isActive('/')}>
-            🗺️ Hartă
-          </Item>
-
-          {session ? (
-            <>
-              <Section>Contul meu</Section>
-              <Item to="/dashboard" $active={isActive('/dashboard')}>
-                📋 Rezervări active
-              </Item>
-              <Item to="/history" $active={isActive('/history')}>
-                🕓 Istoric
-              </Item>
-              <Item to="/profile" $active={isActive('/profile')}>
-                👤 Profil
-              </Item>
-              <Item to="/settings" $active={isActive('/settings')}>
-                ⚙️ Setări
+      {createPortal(
+        <>
+          <Backdrop $open={open} onClick={() => setOpen(false)} />
+          <Drawer $open={open} aria-hidden={!open}>
+            <Header>
+              <HeaderTitle>Meniu</HeaderTitle>
+              <CloseBtn aria-label="Închide meniul" onClick={() => setOpen(false)}>
+                ×
+              </CloseBtn>
+            </Header>
+            <Body>
+              <Section>Navigare</Section>
+              <Item to="/" $active={isActive('/')}>
+                🗺️ Hartă
               </Item>
 
-              {profile?.role === 'admin' && (
+              {session ? (
                 <>
-                  <Section>Administrare</Section>
-                  <Item to="/admin/stations" $active={location.pathname.startsWith('/admin')}>
-                    🛠️ Panou admin
+                  <Section>Contul meu</Section>
+                  <Item to="/dashboard" $active={isActive('/dashboard')}>
+                    📋 Rezervări active
+                  </Item>
+                  <Item to="/history" $active={isActive('/history')}>
+                    🕓 Istoric
+                  </Item>
+                  <Item to="/profile" $active={isActive('/profile')}>
+                    👤 Profil
+                  </Item>
+                  <Item to="/settings" $active={isActive('/settings')}>
+                    ⚙️ Setări
+                  </Item>
+
+                  {profile?.role === 'admin' && (
+                    <>
+                      <Section>Administrare</Section>
+                      <Item to="/admin/stations" $active={location.pathname.startsWith('/admin')}>
+                        🛠️ Panou admin
+                      </Item>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Section>Autentificare</Section>
+                  <Item to="/login" $active={isActive('/login')}>
+                    🔐 Autentificare
+                  </Item>
+                  <Item to="/register" $active={isActive('/register')}>
+                    ✨ Cont nou
                   </Item>
                 </>
               )}
-            </>
-          ) : (
-            <>
-              <Section>Autentificare</Section>
-              <Item to="/login" $active={isActive('/login')}>
-                🔐 Autentificare
-              </Item>
-              <Item to="/register" $active={isActive('/register')}>
-                ✨ Cont nou
-              </Item>
-            </>
-          )}
-        </Body>
-        {session && (
-          <Footer>
-            <Email>{user?.email}</Email>
-            <Button $variant="secondary" $full onClick={signOut}>
-              Deconectare
-            </Button>
-          </Footer>
-        )}
-      </Drawer>
+            </Body>
+            {session && (
+              <Footer>
+                <Email>{user?.email}</Email>
+                <Button $variant="secondary" $full onClick={signOut}>
+                  Deconectare
+                </Button>
+              </Footer>
+            )}
+          </Drawer>
+        </>,
+        document.body,
+      )}
     </>
   );
 }
