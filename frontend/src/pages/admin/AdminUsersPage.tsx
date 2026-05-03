@@ -9,7 +9,7 @@ import {
   useSetAdminUserRole,
 } from '../../hooks/useAdminUserMutations';
 import { useAuth } from '../../auth/useAuth';
-import { Button } from '../../components/ui';
+import { ActionMenu, Button } from '../../components/ui';
 import { UserDialog, type UserDialogMode } from './UserDialog';
 
 const Container = styled.div`
@@ -59,33 +59,6 @@ const RoleBadge = styled.span<{ $role: string }>`
   background: ${({ $role, theme }) =>
     $role === 'admin' ? theme.colors.primary : theme.colors.background};
   color: ${({ $role, theme }) => ($role === 'admin' ? 'white' : theme.colors.text)};
-`;
-
-const ActionButton = styled.button`
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.primary};
-  cursor: pointer;
-  padding: 0;
-  font-size: 0.8125rem;
-  &:hover {
-    text-decoration: underline;
-  }
-  &:disabled {
-    color: ${({ theme }) => theme.colors.textMuted};
-    cursor: not-allowed;
-    text-decoration: none;
-  }
-`;
-
-const ActionDanger = styled(ActionButton)`
-  color: ${({ theme }) => theme.colors.danger};
-`;
-
-const ActionRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing(3)};
 `;
 
 export function AdminUsersPage() {
@@ -190,24 +163,24 @@ function UserRow({
       </td>
       <td>{new Date(user.createdAt).toLocaleString('ro-RO')}</td>
       <td>
-        <ActionRow>
-          <ActionButton onClick={onEditEmail}>Email</ActionButton>
-          <ActionButton onClick={onEditPassword}>Parolă</ActionButton>
-          <ActionButton
-            onClick={() => onChangeRole(nextRole)}
-            disabled={isSelf}
-            title={isSelf ? 'Nu îți poți schimba propriul rol' : undefined}
-          >
-            {roleLabel}
-          </ActionButton>
-          <ActionDanger
-            onClick={onDelete}
-            disabled={isSelf}
-            title={isSelf ? 'Nu te poți șterge pe tine însuți' : undefined}
-          >
-            Șterge
-          </ActionDanger>
-        </ActionRow>
+        <ActionMenu
+          align="right"
+          items={[
+            { label: 'Schimbă email', onClick: onEditEmail },
+            { label: 'Schimbă parola', onClick: onEditPassword },
+            {
+              label: roleLabel,
+              onClick: () => onChangeRole(nextRole),
+              disabled: isSelf,
+            },
+            {
+              label: 'Șterge utilizatorul',
+              onClick: onDelete,
+              variant: 'danger',
+              disabled: isSelf,
+            },
+          ]}
+        />
       </td>
     </tr>
   );
