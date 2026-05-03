@@ -1,23 +1,9 @@
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
-import { Button, Input, Field } from '../../components/ui';
+import { Button, Dialog, Input, Field } from '../../components/ui';
 import { reverseGeocode, forwardGeocode } from '../../lib/nominatim';
 
-const Backdrop = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-`;
-
-const Card = styled.div`
-  background: white;
-  border-radius: ${({ theme }) => theme.radii.lg};
-  padding: ${({ theme }) => theme.spacing(6)};
-  width: 100%;
-  max-width: 480px;
+const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing(4)};
@@ -29,11 +15,12 @@ const Row = styled.div`
 `;
 
 const ErrorBanner = styled.div`
-  padding: ${({ theme }) => theme.spacing(3)};
+  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
   border-radius: ${({ theme }) => theme.radii.md};
-  background: #fee2e2;
+  background: ${({ theme }) => theme.colors.dangerSoft};
   color: ${({ theme }) => theme.colors.danger};
   font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 export interface StationFormValues {
@@ -132,53 +119,50 @@ export function StationFormDialog({ initial, title, submitLabel, onClose, onSubm
   }
 
   return (
-    <Backdrop onClick={onClose}>
-      <Card onClick={(e) => e.stopPropagation()}>
-        <h2 style={{ margin: 0 }}>{title}</h2>
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Field label="Nume stație">
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
+    <Dialog title={title} onClose={onClose}>
+      <Form onSubmit={submit}>
+        <Field label="Nume stație">
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <Field label="Adresă" hint="Introdu adresa și apasă „Caută” pentru auto-coordonate.">
+          <Input
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            disabled={geocoding}
+          />
+        </Field>
+        <Row>
+          <Button type="button" $variant="secondary" onClick={lookupAddress} disabled={geocoding}>
+            {geocoding ? 'Caut…' : 'Caută adresa'}
+          </Button>
+        </Row>
+        <Row>
+          <Field label="Latitudine">
+            <Input value={latitude} onChange={(e) => setLatitude(e.target.value)} />
           </Field>
-          <Field label="Adresă (poți introduce și apăsa „Caută”)">
-            <Input
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              disabled={geocoding}
-            />
+          <Field label="Longitudine">
+            <Input value={longitude} onChange={(e) => setLongitude(e.target.value)} />
           </Field>
-          <Row>
-            <Button type="button" $variant="secondary" onClick={lookupAddress} disabled={geocoding}>
-              {geocoding ? 'Caut…' : 'Caută adresa'}
-            </Button>
-          </Row>
-          <Row>
-            <Field label="Latitudine">
-              <Input value={latitude} onChange={(e) => setLatitude(e.target.value)} />
-            </Field>
-            <Field label="Longitudine">
-              <Input value={longitude} onChange={(e) => setLongitude(e.target.value)} />
-            </Field>
-          </Row>
-          <Field label="Putere (kW)">
-            <Input
-              type="number"
-              min={1}
-              step="0.1"
-              value={powerKw}
-              onChange={(e) => setPowerKw(e.target.value)}
-            />
-          </Field>
-          {error && <ErrorBanner>{error}</ErrorBanner>}
-          <Row>
-            <Button type="button" $variant="secondary" $full onClick={onClose}>
-              Renunță
-            </Button>
-            <Button type="submit" $full disabled={submitting || geocoding}>
-              {submitting ? 'Se salvează…' : submitLabel}
-            </Button>
-          </Row>
-        </form>
-      </Card>
-    </Backdrop>
+        </Row>
+        <Field label="Putere (kW)">
+          <Input
+            type="number"
+            min={1}
+            step="0.1"
+            value={powerKw}
+            onChange={(e) => setPowerKw(e.target.value)}
+          />
+        </Field>
+        {error && <ErrorBanner>{error}</ErrorBanner>}
+        <Row>
+          <Button type="button" $variant="secondary" $full onClick={onClose}>
+            Renunță
+          </Button>
+          <Button type="submit" $full disabled={submitting || geocoding}>
+            {submitting ? 'Se salvează…' : submitLabel}
+          </Button>
+        </Row>
+      </Form>
+    </Dialog>
   );
 }

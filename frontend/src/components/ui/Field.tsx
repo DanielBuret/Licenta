@@ -8,21 +8,42 @@ const Wrap = styled.div`
 `;
 
 const Label = styled.label`
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text};
+  letter-spacing: -0.005em;
+`;
+
+const Hint = styled.span`
+  font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.textMuted};
+  margin-top: 2px;
 `;
 
 const ErrorText = styled.span`
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.danger};
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  &::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 `;
 
 export function Field({
   label,
+  hint,
   error,
   children,
 }: {
   label: string;
+  hint?: string | undefined;
   error?: string | undefined;
   children: ReactNode;
 }) {
@@ -30,7 +51,7 @@ export function Field({
     <Wrap>
       <Label>{label}</Label>
       {children}
-      {error && <ErrorText>{error}</ErrorText>}
+      {error ? <ErrorText>{error}</ErrorText> : hint ? <Hint>{hint}</Hint> : null}
     </Wrap>
   );
 }

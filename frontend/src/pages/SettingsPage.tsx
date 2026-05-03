@@ -25,52 +25,71 @@ const Container = styled.main`
 
 const HeaderRow = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing(4)};
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-size: 1.625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+`;
+
+const Subtitle = styled.p`
+  margin: 4px 0 0;
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-size: 0.9375rem;
 `;
 
 const QuickLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.textMuted};
   text-decoration: none;
   font-size: 0.875rem;
+  font-weight: 500;
+  padding: ${({ theme }) => `${theme.spacing(1.5)} ${theme.spacing(3)}`};
+  border-radius: ${({ theme }) => theme.radii.md};
+  transition: background ${({ theme }) => theme.transitions.fast};
   &:hover {
-    text-decoration: underline;
+    background: ${({ theme }) => theme.colors.surface};
+    color: ${({ theme }) => theme.colors.text};
   }
 `;
 
-const Section = styled.section`
+const Card = styled.section`
   background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.lg};
-  padding: ${({ theme }) => theme.spacing(6)};
-  box-shadow: ${({ theme }) => theme.shadow.sm};
+  padding: ${({ theme }) => theme.spacing(7)};
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing(4)};
+  gap: ${({ theme }) => theme.spacing(5)};
 `;
 
-const SuccessBanner = styled.div`
-  padding: ${({ theme }) => theme.spacing(3)};
+const Banner = styled.div<{ $tone: 'success' | 'danger' }>`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(2)};
+  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
   border-radius: ${({ theme }) => theme.radii.md};
-  background: #dcfce7;
-  color: ${({ theme }) => theme.colors.success};
   font-size: 0.875rem;
-`;
-
-const ErrorBanner = styled.div`
-  padding: ${({ theme }) => theme.spacing(3)};
-  border-radius: ${({ theme }) => theme.radii.md};
-  background: #fee2e2;
-  color: ${({ theme }) => theme.colors.danger};
-  font-size: 0.875rem;
+  font-weight: 500;
+  ${({ $tone, theme }) =>
+    $tone === 'success'
+      ? `background: ${theme.colors.statusFreeSoft}; color: ${theme.colors.success};`
+      : `background: ${theme.colors.dangerSoft}; color: ${theme.colors.danger};`}
 `;
 
 const ButtonRow = styled.div`
   display: flex;
   gap: ${({ theme }) => theme.spacing(3)};
   justify-content: flex-end;
+  padding-top: ${({ theme }) => theme.spacing(2)};
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
 export function SettingsPage() {
@@ -109,8 +128,9 @@ export function SettingsPage() {
         carModelId: carModelId === '' ? null : Number(carModelId),
       });
       setSuccess(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.error?.message ?? 'Eroare la salvare.');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
+      setError(e.response?.data?.error?.message ?? 'Eroare la salvare.');
     }
   }
 
@@ -127,16 +147,19 @@ export function SettingsPage() {
       <AppHeader />
       <Container>
         <HeaderRow>
-          <h1 style={{ margin: 0 }}>Setări</h1>
+          <div>
+            <Title>Setări</Title>
+            <Subtitle>Modifică numele și mașina asociată contului.</Subtitle>
+          </div>
           <QuickLink to="/profile">← Vezi profilul</QuickLink>
         </HeaderRow>
 
-        <Section>
+        <Card>
           {profileLoading || !profile ? (
-            <p>Se încarcă…</p>
+            <p style={{ margin: 0 }}>Se încarcă…</p>
           ) : (
             <Form onSubmit={submit}>
-              <Field label="Email (nu poate fi modificat aici)">
+              <Field label="Email" hint="Email-ul nu poate fi modificat aici.">
                 <Input value={profile.email} disabled />
               </Field>
               <Field label="Nume complet">
@@ -165,8 +188,8 @@ export function SettingsPage() {
                   ))}
                 </Select>
               </Field>
-              {error && <ErrorBanner>{error}</ErrorBanner>}
-              {success && <SuccessBanner>Setările au fost salvate.</SuccessBanner>}
+              {error && <Banner $tone="danger">{error}</Banner>}
+              {success && <Banner $tone="success">Setările au fost salvate.</Banner>}
               <ButtonRow>
                 <Button
                   type="button"
@@ -174,7 +197,7 @@ export function SettingsPage() {
                   onClick={reset}
                   disabled={!dirty || update.isPending}
                 >
-                  Anulează modificările
+                  Renunță
                 </Button>
                 <Button type="submit" disabled={!dirty || update.isPending}>
                   {update.isPending ? 'Se salvează…' : 'Salvează'}
@@ -182,7 +205,7 @@ export function SettingsPage() {
               </ButtonRow>
             </Form>
           )}
-        </Section>
+        </Card>
       </Container>
     </Page>
   );

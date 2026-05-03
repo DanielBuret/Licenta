@@ -26,11 +26,12 @@ const Footer = styled.p`
 `;
 
 const ErrorBanner = styled.div`
-  padding: ${({ theme }) => theme.spacing(3)};
+  padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
   border-radius: ${({ theme }) => theme.radii.md};
-  background: #fee2e2;
+  background: ${({ theme }) => theme.colors.dangerSoft};
   color: ${({ theme }) => theme.colors.danger};
   font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 export function LoginPage() {

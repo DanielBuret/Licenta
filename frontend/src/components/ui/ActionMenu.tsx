@@ -24,7 +24,7 @@ const Wrap = styled.div`
 const Trigger = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing(1)};
+  gap: ${({ theme }) => theme.spacing(1.5)};
   padding: ${({ theme }) => `${theme.spacing(1.5)} ${theme.spacing(3)}`};
   border-radius: ${({ theme }) => theme.radii.md};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -33,13 +33,22 @@ const Trigger = styled.button`
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition:
+    background ${({ theme }) => theme.transitions.fast},
+    border-color ${({ theme }) => theme.transitions.fast},
+    box-shadow ${({ theme }) => theme.transitions.fast};
   &:hover {
     background: ${({ theme }) => theme.colors.background};
+    border-color: ${({ theme }) => theme.colors.borderStrong};
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: ${({ theme }) => theme.shadow.ring};
   }
 `;
 
 const Caret = styled.span`
+  display: inline-flex;
   font-size: 0.6875rem;
   color: ${({ theme }) => theme.colors.textMuted};
 `;
@@ -49,12 +58,24 @@ const Menu = styled.div`
   min-width: ${MENU_MIN_WIDTH}px;
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.md};
-  box-shadow: ${({ theme }) => theme.shadow.md};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  box-shadow: ${({ theme }) => theme.shadow.lg};
   z-index: 2000;
-  padding: ${({ theme }) => theme.spacing(1)};
+  padding: ${({ theme }) => theme.spacing(1.5)};
   display: flex;
   flex-direction: column;
+  gap: 2px;
+  animation: actionmenu-in 120ms ease-out;
+  @keyframes actionmenu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const MenuItem = styled.button<{ $variant: 'default' | 'danger' }>`
@@ -66,15 +87,17 @@ const MenuItem = styled.button<{ $variant: 'default' | 'danger' }>`
   background: transparent;
   border-radius: ${({ theme }) => theme.radii.sm};
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
+  transition: background ${({ theme }) => theme.transitions.fast};
   color: ${({ $variant, theme }) =>
     $variant === 'danger' ? theme.colors.danger : theme.colors.text};
   &:hover:not(:disabled) {
     background: ${({ $variant, theme }) =>
-      $variant === 'danger' ? '#fee2e2' : theme.colors.background};
+      $variant === 'danger' ? theme.colors.dangerSoft : theme.colors.background};
   }
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
   }
 `;

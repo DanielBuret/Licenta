@@ -1,4 +1,3 @@
-import styled from 'styled-components';
 import { useState } from 'react';
 import { useAdminUsers, type AdminUser } from '../../hooks/useAdminUsers';
 import {
@@ -10,56 +9,19 @@ import {
 } from '../../hooks/useAdminUserMutations';
 import { useAuth } from '../../auth/useAuth';
 import { ActionMenu, Button } from '../../components/ui';
+import {
+  Card,
+  EmptyState,
+  PageContainer,
+  PageHeader,
+  PageSubtitle,
+  PageTitle,
+  PageTitleGroup,
+  StatusPill,
+  Table,
+  TableScroll,
+} from '../../components/admin/AdminUI';
 import { UserDialog, type UserDialogMode } from './UserDialog';
-
-const Container = styled.div`
-  padding: ${({ theme }) => theme.spacing(6)};
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: ${({ theme }) => theme.spacing(4)};
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  background: ${({ theme }) => theme.colors.surface};
-  border-radius: ${({ theme }) => theme.radii.md};
-  overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadow.sm};
-  th,
-  td {
-    padding: ${({ theme }) => `${theme.spacing(3)} ${theme.spacing(4)}`};
-    text-align: left;
-    border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-size: 0.875rem;
-  }
-  th {
-    background: ${({ theme }) => theme.colors.background};
-    font-weight: 600;
-    color: ${({ theme }) => theme.colors.textMuted};
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.75rem;
-  }
-  tr:last-child td {
-    border-bottom: none;
-  }
-`;
-
-const RoleBadge = styled.span<{ $role: string }>`
-  display: inline-block;
-  padding: ${({ theme }) => `${theme.spacing(0.5)} ${theme.spacing(2)}`};
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: ${({ $role, theme }) =>
-    $role === 'admin' ? theme.colors.primary : theme.colors.background};
-  color: ${({ $role, theme }) => ($role === 'admin' ? 'white' : theme.colors.text)};
-`;
 
 export function AdminUsersPage() {
   const { session } = useAuth();
@@ -74,40 +36,49 @@ export function AdminUsersPage() {
   const currentUserId = session?.user.id;
 
   return (
-    <Container>
-      <Header>
-        <h1 style={{ margin: 0 }}>Utilizatori</h1>
+    <PageContainer>
+      <PageHeader>
+        <PageTitleGroup>
+          <PageTitle>Utilizatori</PageTitle>
+          <PageSubtitle>Gestionează conturile utilizatorilor și rolurile lor</PageSubtitle>
+        </PageTitleGroup>
         <Button onClick={() => setDialog({ kind: 'add' })}>+ Adaugă utilizator</Button>
-      </Header>
-      {isLoading ? (
-        <p>Se încarcă…</p>
-      ) : (
-        <Table>
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Nume complet</th>
-              <th>Mașină</th>
-              <th>Rol</th>
-              <th>Înregistrat</th>
-              <th>Acțiuni</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <UserRow
-                key={u.id}
-                user={u}
-                isSelf={u.id === currentUserId}
-                onChangeRole={(role) => setRole.mutate({ id: u.id, role })}
-                onEditEmail={() => setDialog({ kind: 'email', user: u })}
-                onEditPassword={() => setDialog({ kind: 'password', user: u })}
-                onDelete={() => setDialog({ kind: 'delete', user: u })}
-              />
-            ))}
-          </tbody>
-        </Table>
-      )}
+      </PageHeader>
+
+      <Card>
+        {isLoading ? (
+          <EmptyState>Se încarcă…</EmptyState>
+        ) : users.length === 0 ? (
+          <EmptyState>Nu există utilizatori încă.</EmptyState>
+        ) : (
+          <TableScroll>
+            <Table>
+              <thead>
+                <tr>
+                  <th>Utilizator</th>
+                  <th>Mașină</th>
+                  <th>Rol</th>
+                  <th>Înregistrat</th>
+                  <th style={{ textAlign: 'right' }}>Acțiuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <UserRow
+                    key={u.id}
+                    user={u}
+                    isSelf={u.id === currentUserId}
+                    onChangeRole={(role) => setRole.mutate({ id: u.id, role })}
+                    onEditEmail={() => setDialog({ kind: 'email', user: u })}
+                    onEditPassword={() => setDialog({ kind: 'password', user: u })}
+                    onDelete={() => setDialog({ kind: 'delete', user: u })}
+                  />
+                ))}
+              </tbody>
+            </Table>
+          </TableScroll>
+        )}
+      </Card>
 
       {dialog && (
         <UserDialog
@@ -127,7 +98,7 @@ export function AdminUsersPage() {
           }}
         />
       )}
-    </Container>
+    </PageContainer>
   );
 }
 
@@ -147,22 +118,44 @@ function UserRow({
   onDelete: () => void;
 }) {
   const nextRole = user.role === 'admin' ? 'user' : 'admin';
-  const roleLabel = nextRole === 'admin' ? 'Fă admin' : 'Fă user';
+  const roleLabel = nextRole === 'admin' ? 'Promovează admin' : 'Retrogradează user';
 
   return (
     <tr>
-      <td>{user.email}</td>
-      <td>{user.fullName}</td>
       <td>
-        {user.carModel
-          ? `${user.carModel.brand} ${user.carModel.model} (${user.carModel.batteryCapacityKwh} kWh)`
-          : '—'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Avatar name={user.fullName} />
+          <div>
+            <div style={{ fontWeight: 600 }}>{user.fullName}</div>
+            <div style={{ fontSize: '0.8125rem', color: '#64748b' }}>{user.email}</div>
+          </div>
+        </div>
       </td>
       <td>
-        <RoleBadge $role={user.role}>{user.role}</RoleBadge>
+        {user.carModel ? (
+          <div>
+            <div style={{ fontWeight: 500 }}>
+              {user.carModel.brand} {user.carModel.model}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+              {user.carModel.batteryCapacityKwh} kWh
+            </div>
+          </div>
+        ) : (
+          <span style={{ color: '#94a3b8' }}>—</span>
+        )}
       </td>
-      <td>{new Date(user.createdAt).toLocaleString('ro-RO')}</td>
       <td>
+        <StatusPill $tone={user.role === 'admin' ? 'blue' : 'gray'}>{user.role}</StatusPill>
+      </td>
+      <td style={{ color: '#64748b' }}>
+        {new Date(user.createdAt).toLocaleDateString('ro-RO', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })}
+      </td>
+      <td style={{ textAlign: 'right' }}>
         <ActionMenu
           align="right"
           items={[
@@ -184,4 +177,38 @@ function UserRow({
       </td>
     </tr>
   );
+}
+
+function Avatar({ name }: { name: string }) {
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join('');
+  const hue = hashHue(name);
+  return (
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        background: `hsl(${hue}, 70%, 92%)`,
+        color: `hsl(${hue}, 60%, 32%)`,
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: '0.8125rem',
+        fontWeight: 600,
+        flexShrink: 0,
+      }}
+    >
+      {initials || '?'}
+    </div>
+  );
+}
+
+function hashHue(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h % 360;
 }
