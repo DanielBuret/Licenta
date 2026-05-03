@@ -6,6 +6,17 @@ import { useAuth } from '../auth/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { supabase } from '../lib/supabase';
 import { Button } from './ui';
+import {
+  CalendarIcon,
+  ClockIcon,
+  LogInIcon,
+  MapIcon,
+  MenuIcon,
+  SettingsIcon,
+  ShieldIcon,
+  UserIcon,
+  UserPlusIcon,
+} from './icons';
 
 const Trigger = styled.button`
   display: inline-flex;
@@ -162,14 +173,7 @@ export function HamburgerMenu() {
         aria-expanded={open}
         onClick={() => setOpen(true)}
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path
-            d="M3 5h14M3 10h14M3 15h14"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
+        <MenuIcon size={20} />
       </Trigger>
 
       {createPortal(
@@ -185,30 +189,30 @@ export function HamburgerMenu() {
             <Body>
               <Section>Navigare</Section>
               <Item to="/" $active={isActive('/')}>
-                🗺️ Hartă
+                <MapIcon /> <span>Hartă</span>
               </Item>
 
               {session ? (
                 <>
                   <Section>Contul meu</Section>
                   <Item to="/dashboard" $active={isActive('/dashboard')}>
-                    📋 Rezervări active
+                    <CalendarIcon /> <span>Rezervări active</span>
                   </Item>
                   <Item to="/history" $active={isActive('/history')}>
-                    🕓 Istoric
+                    <ClockIcon /> <span>Istoric</span>
                   </Item>
                   <Item to="/profile" $active={isActive('/profile')}>
-                    👤 Profil
+                    <UserIcon /> <span>Profil</span>
                   </Item>
                   <Item to="/settings" $active={isActive('/settings')}>
-                    ⚙️ Setări
+                    <SettingsIcon /> <span>Setări</span>
                   </Item>
 
                   {profile?.role === 'admin' && (
                     <>
                       <Section>Administrare</Section>
                       <Item to="/admin/stations" $active={location.pathname.startsWith('/admin')}>
-                        🛠️ Panou admin
+                        <ShieldIcon /> <span>Panou admin</span>
                       </Item>
                     </>
                   )}
@@ -217,10 +221,10 @@ export function HamburgerMenu() {
                 <>
                   <Section>Autentificare</Section>
                   <Item to="/login" $active={isActive('/login')}>
-                    🔐 Autentificare
+                    <LogInIcon /> <span>Autentificare</span>
                   </Item>
                   <Item to="/register" $active={isActive('/register')}>
-                    ✨ Cont nou
+                    <UserPlusIcon /> <span>Cont nou</span>
                   </Item>
                 </>
               )}
