@@ -32,6 +32,7 @@ model Profile {
   carModel     CarModel?      @relation(fields: [carModelId], references: [id])
   reservations Reservation[]
   stations     Station[]      @relation("StationCreatedBy")
+  favorites    Favorite[]
 
   @@map("profiles")
 }
@@ -48,8 +49,22 @@ model Station {
 
   creator      Profile?      @relation("StationCreatedBy", fields: [createdBy], references: [id])
   reservations Reservation[]
+  favorites    Favorite[]
 
   @@map("stations")
+}
+
+model Favorite {
+  userId    String   @map("user_id") @db.Uuid
+  stationId Int      @map("station_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user    Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  station Station @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, stationId])
+  @@index([userId])
+  @@map("favorites")
 }
 
 model Reservation {

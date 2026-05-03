@@ -6,6 +6,7 @@ import { profileRouter } from './routes/profile.js';
 import { carModelsRouter } from './routes/car-models.js';
 import { stationsRouter } from './routes/stations.js';
 import { reservationsRouter } from './routes/reservations.js';
+import { favoritesRouter } from './routes/favorites.js';
 import { adminRouter } from './routes/admin/index.js';
 
 export function buildApp() {
@@ -21,6 +22,7 @@ export function buildApp() {
   app.use('/api/car-models', carModelsRouter);
   app.use('/api/stations', stationsRouter);
   app.use('/api/reservations', reservationsRouter);
+  app.use('/api/favorites', favoritesRouter);
   app.use('/api/admin', adminRouter);
 
   app.use(errorMiddleware);

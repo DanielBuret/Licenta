@@ -12,6 +12,7 @@ import {
 } from './markerIcons';
 import type { StationListItem } from '../../hooks/useStations';
 import type { UserLocation } from '../../hooks/useUserLocation';
+import { useFavorites } from '../../hooks/useFavorites';
 
 const ORADEA_CENTER: [number, number] = [47.0722, 21.9211];
 const DEFAULT_ZOOM = 13;
@@ -119,6 +120,7 @@ function MarkersLayer({
 }) {
   const map = useMap();
   const [clusters, setClusters] = useState<Cluster[]>([]);
+  const { set: favoriteIds } = useFavorites();
 
   useEffect(() => {
     const recompute = () => setClusters(clusterStations(stations, map));
@@ -153,6 +155,7 @@ function MarkersLayer({
                 statusFromStation(s),
                 s.activeReservations > 0 ? s.activeReservations : undefined,
                 s.id === selectedId,
+                favoriteIds.has(s.id),
               )}
               eventHandlers={{
                 click: () => onSelect(s.id),
@@ -171,7 +174,11 @@ function MarkersLayer({
           <Marker
             key={`c-${c.id}`}
             position={c.center}
-            icon={buildClusterIcon(worstStatus(c.stations), c.stations.length)}
+            icon={buildClusterIcon(
+              worstStatus(c.stations),
+              c.stations.length,
+              c.stations.some((s) => favoriteIds.has(s.id)),
+            )}
             eventHandlers={{
               click: () => {
                 const fitZoom = map.getBoundsZoom(c.bounds, false, L.point(60, 60));
