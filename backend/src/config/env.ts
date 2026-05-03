@@ -24,6 +24,24 @@ for (const path of candidates) {
   }
 }
 
+// Hosted UIs (Vercel, Render, etc.) preserve trailing whitespace/newlines
+// from copy-paste, which Prisma rejects with "invalid domain character".
+// Defensively trim the values that downstream tooling reads directly from
+// process.env (Prisma reads DATABASE_URL/DIRECT_URL itself, not the parsed
+// env object below).
+for (const key of [
+  'DATABASE_URL',
+  'DIRECT_URL',
+  'SUPABASE_URL',
+  'SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'SUPABASE_JWKS_URL',
+  'CORS_ORIGIN',
+]) {
+  const v = process.env[key];
+  if (typeof v === 'string') process.env[key] = v.trim();
+}
+
 // z.string().url() uses the WHATWG URL parser which has trouble with some
 // Postgres connection strings (special chars in passwords, dotted usernames
 // like `postgres.<projectref>`). Use a permissive regex instead — Prisma
