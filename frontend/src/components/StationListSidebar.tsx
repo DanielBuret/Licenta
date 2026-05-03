@@ -8,6 +8,22 @@ import { Input } from './ui';
 import { formatDistance, googleMapsDirections, haversineKm } from '../lib/distance';
 
 const ORADEA_CENTER = { lat: 47.0722, lon: 21.9211 };
+const MOBILE_BREAKPOINT = '900px';
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT})`).matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT})`);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return isMobile;
+}
 
 const Wrap = styled.aside`
   display: flex;
@@ -317,6 +333,8 @@ export function StationListSidebar({
   const { user } = useAuth();
   const { set: favoriteIds } = useFavorites();
   const toggleFav = useToggleFavorite();
+  const isMobile = useIsMobile();
+  const effectiveCollapsed = collapsed && !isMobile;
 
   useEffect(() => {
     if (selectedId == null) return;
@@ -348,7 +366,7 @@ export function StationListSidebar({
       });
   }, [stations, search, origin.lat, origin.lon, favoriteIds]);
 
-  if (collapsed) {
+  if (effectiveCollapsed) {
     return (
       <Rail>
         <RailButton
@@ -391,28 +409,30 @@ export function StationListSidebar({
                   : 'Sortate aproximativ după distanța de centrul Oradei'}
             </HeaderSubtitle>
           </div>
-          <CollapseButton
-            type="button"
-            $collapsed={false}
-            aria-label="Restrânge lista"
-            aria-expanded
-            title="Restrânge lista"
-            onClick={onToggleCollapse}
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
+          {!isMobile && (
+            <CollapseButton
+              type="button"
+              $collapsed={false}
+              aria-label="Restrânge lista"
+              aria-expanded
+              title="Restrânge lista"
+              onClick={onToggleCollapse}
             >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </CollapseButton>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </CollapseButton>
+          )}
         </HeaderTopRow>
         <Input
           type="search"
