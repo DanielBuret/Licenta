@@ -1,0 +1,11 @@
+{
+  "framework": null,
+  "buildCommand": "npx prisma generate",
+  "installCommand": "cd .. && npm install",
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 10
+    }
+  },
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api/[...slug]" }]
+}
