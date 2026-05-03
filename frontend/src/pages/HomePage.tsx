@@ -63,6 +63,7 @@ export function HomePage() {
             stations={stations}
             selectedId={selected}
             onSelect={setSelected}
+            onDeselect={(id) => setSelected((prev) => (prev === id ? null : prev))}
             userLocation={userLoc.location}
             popupContent={(s) => (
               <StationPopup stationId={s.id} onReserve={(id) => setReservingId(id)} />

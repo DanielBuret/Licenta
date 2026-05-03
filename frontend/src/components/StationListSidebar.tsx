@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { StationListItem } from '../hooks/useStations';
 import type { UserLocation } from '../hooks/useUserLocation';
 import { Input } from './ui';
@@ -179,6 +179,13 @@ export function StationListSidebar({
   locationError,
 }: Props) {
   const [search, setSearch] = useState('');
+  const itemRefs = useRef<Map<number, HTMLLIElement>>(new Map());
+
+  useEffect(() => {
+    if (selectedId == null) return;
+    const el = itemRefs.current.get(selectedId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [selectedId]);
 
   const origin: { lat: number; lon: number; approximate: boolean } = userLocation
     ? { lat: userLocation.lat, lon: userLocation.lon, approximate: false }
@@ -236,16 +243,21 @@ export function StationListSidebar({
               userLocation?.lon,
             );
             return (
-              <Item key={s.id} $selected={s.id === selectedId} onClick={() => onSelect(s.id)}>
+              <Item
+                key={s.id}
+                ref={(el) => {
+                  if (el) itemRefs.current.set(s.id, el);
+                  else itemRefs.current.delete(s.id);
+                }}
+                $selected={s.id === selectedId}
+                onClick={() => onSelect(s.id)}
+              >
                 <TopRow>
                   <NameWrap>
                     <Dot $status={status} />
                     <Name>{s.name}</Name>
                   </NameWrap>
-                  <Distance>
-                    {origin.approximate ? '~' : ''}
-                    {formatDistance(s.__distanceKm)}
-                  </Distance>
+                  {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
                 </TopRow>
                 <Address>{s.address}</Address>
                 <MetaRow>

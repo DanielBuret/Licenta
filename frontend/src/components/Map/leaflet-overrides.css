@@ -6,9 +6,19 @@
 }
 
 .station-marker,
-.user-location-marker {
+.user-location-marker,
+.station-cluster {
   background: transparent;
   border: none;
+}
+
+.station-cluster {
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.station-cluster:hover {
+  transform: scale(1.08);
 }
 
 .leaflet-popup-content-wrapper {
