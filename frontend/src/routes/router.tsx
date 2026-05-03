@@ -7,6 +7,7 @@ import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { AdminRoute } from '../auth/AdminRoute';
 import { AdminLayout } from '../pages/admin/AdminLayout';
 import { AdminMap } from '../pages/admin/AdminMap';
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage';
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminMap /> },
       { path: 'stations', element: <AdminMap /> },
+      { path: 'users', element: <AdminUsersPage /> },
     ],
   },
   {
