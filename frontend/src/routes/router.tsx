@@ -2,6 +2,8 @@ import { createBrowserRouter } from 'react-router-dom';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { HomePage } from '../pages/HomePage';
+import { DashboardPage } from '../pages/DashboardPage';
+import { ProtectedRoute } from '../auth/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +20,11 @@ export const router = createBrowserRouter([
   },
   {
     path: '/dashboard',
-    element: <div>DashboardPage placeholder</div>,
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '*',
