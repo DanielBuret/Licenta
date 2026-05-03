@@ -56,16 +56,22 @@ export const TableScroll = styled.div`
   overflow: auto;
 `;
 
-export const Table = styled.table`
+export const Table = styled.table<{ $compact?: boolean }>`
   width: 100%;
   border-collapse: collapse;
   th,
   td {
-    padding: ${({ theme }) => `${theme.spacing(3.5)} ${theme.spacing(4)}`};
+    padding: ${({ theme, $compact }) =>
+      $compact
+        ? `${theme.spacing(1.5)} ${theme.spacing(3)}`
+        : `${theme.spacing(3.5)} ${theme.spacing(4)}`};
     text-align: left;
     border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-    font-size: 0.875rem;
+    font-size: ${({ $compact }) => ($compact ? '0.8125rem' : '0.875rem')};
     vertical-align: middle;
+    transition:
+      padding ${({ theme }) => theme.transitions.base},
+      font-size ${({ theme }) => theme.transitions.base};
   }
   th {
     background: ${({ theme }) => theme.colors.surfaceMuted};
@@ -73,7 +79,7 @@ export const Table = styled.table`
     color: ${({ theme }) => theme.colors.textMuted};
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    font-size: 0.6875rem;
+    font-size: ${({ $compact }) => ($compact ? '0.625rem' : '0.6875rem')};
     white-space: nowrap;
     position: sticky;
     top: 0;
@@ -87,6 +93,34 @@ export const Table = styled.table`
   }
   tbody tr:hover {
     background: ${({ theme }) => theme.colors.surfaceMuted};
+  }
+`;
+
+export const DensityToggle = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(2)};
+  padding: ${({ theme }) => `${theme.spacing(2)} ${theme.spacing(3)}`};
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid
+    ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.border)};
+  background: ${({ $active, theme }) =>
+    $active ? theme.colors.primarySoft : theme.colors.surface};
+  color: ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.textMuted)};
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background ${({ theme }) => theme.transitions.fast},
+    border-color ${({ theme }) => theme.transitions.fast},
+    color ${({ theme }) => theme.transitions.fast};
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.borderStrong};
+    color: ${({ theme }) => theme.colors.text};
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: ${({ theme }) => theme.shadow.ring};
   }
 `;
 

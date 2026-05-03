@@ -8,6 +8,7 @@ import {
 import { ActionMenu, Select } from '../../components/ui';
 import {
   Card,
+  DensityToggle,
   EmptyState,
   Mono,
   PageContainer,
@@ -97,6 +98,7 @@ export function AdminReservationsPage() {
   const [status, setStatus] = useState<ReservationStatus | ''>('');
   const [sort, setSort] = useState<SortKey>('newest');
   const [period, setPeriod] = useState<Period>('all');
+  const [compact, setCompact] = useState(false);
 
   const { data: reservations = [], isLoading } = useAdminReservations(status || undefined);
   const cancel = useAdminCancelReservation();
@@ -175,6 +177,16 @@ export function AdminReservationsPage() {
             </Select>
           </FilterBox>
         </FilterGroup>
+
+        <DensityToggle
+          $active={compact}
+          onClick={() => setCompact((v) => !v)}
+          title={compact ? 'Vizualizare confortabilă' : 'Vizualizare compactă'}
+          aria-pressed={compact}
+        >
+          {compact ? <ExpandIcon /> : <CompactIcon />}
+          {compact ? 'Expand' : 'Compact'}
+        </DensityToggle>
       </Toolbar>
 
       <Card>
@@ -184,7 +196,7 @@ export function AdminReservationsPage() {
           <EmptyState>Nicio rezervare cu filtrele curente.</EmptyState>
         ) : (
           <TableScroll>
-            <Table>
+            <Table $compact={compact}>
               <thead>
                 <tr>
                   <th>ID</th>
@@ -278,5 +290,46 @@ export function AdminReservationsPage() {
         )}
       </Card>
     </PageContainer>
+  );
+}
+
+function CompactIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="3" y1="14" x2="21" y2="14" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
+function ExpandIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
   );
 }
