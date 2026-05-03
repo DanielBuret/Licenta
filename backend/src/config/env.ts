@@ -24,12 +24,20 @@ for (const path of candidates) {
   }
 }
 
+// z.string().url() uses the WHATWG URL parser which has trouble with some
+// Postgres connection strings (special chars in passwords, dotted usernames
+// like `postgres.<projectref>`). Use a permissive regex instead — Prisma
+// will surface its own error if the string is unparseable later.
+const postgresUrl = z.string().regex(/^postgres(ql)?:\/\//, {
+  message: 'must start with postgres:// or postgresql://',
+});
+
 const Schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   TIME_SCALE_FACTOR: z.coerce.number().positive().default(60),
-  DATABASE_URL: z.string().url(),
-  DIRECT_URL: z.string().url(),
+  DATABASE_URL: postgresUrl,
+  DIRECT_URL: postgresUrl,
   SUPABASE_URL: z.string().url(),
   SUPABASE_ANON_KEY: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
