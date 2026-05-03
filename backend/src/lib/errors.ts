@@ -15,3 +15,5 @@ export const badRequest = (msg: string, details?: unknown) =>
 export const notFound = (msg = 'Not found') => new HttpError(404, 'not_found', msg);
 export const conflict = (msg: string) => new HttpError(409, 'conflict', msg);
 export const forbidden = (msg = 'Forbidden') => new HttpError(403, 'forbidden', msg);
+export const unauthenticated = (msg = 'Unauthenticated') =>
+  new HttpError(401, 'unauthenticated', msg);

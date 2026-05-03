@@ -26,12 +26,14 @@ vi.mock('../lib/prisma.js', () => ({
 import { jwtVerify } from 'jose';
 import { prisma } from '../lib/prisma.js';
 import { requireAuth } from './auth.js';
+import { errorMiddleware } from './error.js';
 
 function buildApp() {
   const app = express();
   app.get('/protected', requireAuth, (req, res) => {
     res.json({ id: req.user!.id, role: req.user!.role });
   });
+  app.use(errorMiddleware);
   return app;
 }
 
