@@ -15,6 +15,8 @@ const Layout = styled.div`
   display: grid;
   grid-template-rows: auto auto 1fr;
   height: 100vh;
+  width: 100%;
+  overflow: hidden;
 
   @media (min-width: calc(${MOBILE_BREAKPOINT} + 1px)) {
     grid-template-rows: auto 1fr;
@@ -58,6 +60,7 @@ const Body = styled.div`
   display: grid;
   grid-template-columns: 360px 1fr;
   min-height: 0;
+  min-width: 0;
 
   @media (max-width: ${MOBILE_BREAKPOINT}) {
     grid-template-columns: 1fr;
@@ -67,8 +70,10 @@ const Body = styled.div`
 
 const SidebarSlot = styled.div<{ $mobileHidden: boolean }>`
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 
   @media (max-width: ${MOBILE_BREAKPOINT}) {
     display: ${({ $mobileHidden }) => ($mobileHidden ? 'none' : 'flex')};
@@ -78,6 +83,8 @@ const SidebarSlot = styled.div<{ $mobileHidden: boolean }>`
 const MapSlot = styled.div<{ $mobileHidden: boolean }>`
   position: relative;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 
   @media (max-width: ${MOBILE_BREAKPOINT}) {
     display: ${({ $mobileHidden }) => ($mobileHidden ? 'none' : 'block')};

@@ -2,6 +2,8 @@ import styled from 'styled-components';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { StationListItem } from '../hooks/useStations';
 import type { UserLocation } from '../hooks/useUserLocation';
+import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
+import { useAuth } from '../auth/useAuth';
 import { Input } from './ui';
 import { formatDistance, googleMapsDirections, haversineKm } from '../lib/distance';
 
@@ -13,6 +15,9 @@ const Wrap = styled.aside`
   background: ${({ theme }) => theme.colors.surface};
   border-right: 1px solid ${({ theme }) => theme.colors.border};
   min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 `;
 
 const Header = styled.div`
@@ -107,6 +112,38 @@ const Distance = styled.span`
   flex-shrink: 0;
 `;
 
+const FavButton = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: ${({ $active, theme }) =>
+    $active ? theme.colors.statusReserved : theme.colors.textSubtle};
+  font-size: 1.125rem;
+  line-height: 1;
+  border-radius: ${({ theme }) => theme.radii.sm};
+  transition:
+    color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+    transform: scale(1.1);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+`;
+
 const Address = styled.span`
   color: ${({ theme }) => theme.colors.textMuted};
   font-size: 0.8125rem;
@@ -180,6 +217,9 @@ export function StationListSidebar({
 }: Props) {
   const [search, setSearch] = useState('');
   const itemRefs = useRef<Map<number, HTMLLIElement>>(new Map());
+  const { user } = useAuth();
+  const { set: favoriteIds } = useFavorites();
+  const toggleFav = useToggleFavorite();
 
   useEffect(() => {
     if (selectedId == null) return;
@@ -203,9 +243,13 @@ export function StationListSidebar({
       .map((s) => ({
         ...s,
         __distanceKm: haversineKm(origin.lat, origin.lon, s.latitude, s.longitude),
+        __isFavorite: favoriteIds.has(s.id),
       }))
-      .sort((a, b) => a.__distanceKm - b.__distanceKm);
-  }, [stations, search, origin.lat, origin.lon]);
+      .sort((a, b) => {
+        if (a.__isFavorite !== b.__isFavorite) return a.__isFavorite ? -1 : 1;
+        return a.__distanceKm - b.__distanceKm;
+      });
+  }, [stations, search, origin.lat, origin.lon, favoriteIds]);
 
   return (
     <Wrap>
@@ -257,6 +301,20 @@ export function StationListSidebar({
                     <Dot $status={status} />
                     <Name>{s.name}</Name>
                   </NameWrap>
+                  {user && (
+                    <FavButton
+                      type="button"
+                      $active={s.__isFavorite}
+                      aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
+                      }}
+                    >
+                      {s.__isFavorite ? '★' : '☆'}
+                    </FavButton>
+                  )}
                   {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
                 </TopRow>
                 <Address>{s.address}</Address>
