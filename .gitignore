@@ -24,6 +24,9 @@ npm-debug.log*
 # Brainstorming companion artefacts
 .superpowers/
 
+# Docs
+docs/
+
 # Prisma
 *.db
 *.db-journal
