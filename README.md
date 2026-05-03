@@ -1,61 +1,63 @@
-# Licenta — EV Charging Station Manager
+# Charging Station
 
-A web application for managing electric vehicle charging stations in **Oradea, Romania**. Built as a bachelor's thesis project demonstrating full-stack TypeScript, real-time data sync, and clean architectural separation.
+Bachelor thesis project: web app for managing electric vehicle charging stations in Oradea, Romania.
 
-## What it does
+- **Frontend:** React + TypeScript + Vite + Leaflet (added in Phase 2)
+- **Backend:** Node.js + TypeScript + Express + Prisma
+- **DB / Auth / Realtime:** Supabase (Postgres)
 
-End users register, view charging stations on an interactive map, and reserve free or queued stations. Administrators manage stations through a privileged map-based interface. The app simulates the full charging lifecycle (reserve → 15s grace → charging → finish) with real-time UI updates — no polling.
+## Local development (Phase 1: backend only)
 
-## Highlights
+### Prerequisites
 
-- **Map-driven UX** — three station states (free / reserved / charging) rendered as color-coded markers on Leaflet + OpenStreetMap.
-- **Reservation queue** — capacity 2 per station (one active charging + one waiting). Atomic queue promotion on cancel/finish.
-- **Realistic charging time** — derived from car battery capacity, station power, and current charge level. Configurable time-scale factor for demo vs. real-time.
-- **Real-time sync** — Supabase Realtime channels push station and reservation updates to all connected clients.
-- **Admin panel** — click-to-place stations on the map, with Nominatim address geocoding.
-- **Type-safe end-to-end** — shared TypeScript types between frontend, backend, and database.
+- Node.js >= 20, npm >= 10
+- A Supabase project (free tier) — https://supabase.com
+- A second Supabase project labelled `charging-station-test` for the test database (recommended)
 
-## Tech stack
+### Setup
 
-| Layer            | Choice                                                        |
-| ---------------- | ------------------------------------------------------------- |
-| Frontend         | React 18, Vite, styled-components, react-leaflet, react-query |
-| Backend          | Node.js 20, Express 4, Prisma 5, zod                          |
-| DB / Auth / RT   | Supabase (Postgres + Auth + Realtime)                         |
-| Maps / Geocoding | OpenStreetMap (Leaflet) + Nominatim                           |
-| Tests            | Vitest                                                        |
+1. `cp .env.example .env` and fill in values from the Supabase dashboard:
+   - Project Settings → API: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (publishable), `SUPABASE_SERVICE_ROLE_KEY` (secret)
+   - JWKS endpoint: `SUPABASE_JWKS_URL` is `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
+   - Connect → ORMs → Prisma: copy both `DATABASE_URL` (port 6543, with `?pgbouncer=true`) and `DIRECT_URL` (port 5432); replace the password placeholders.
+2. Create a second Supabase project labelled "charging-station-test" and repeat step 1 into a `.env.test` file at the repo root.
+3. `npm install`
+4. `npm --workspace backend run prisma:migrate` (or `npx prisma migrate deploy --schema=backend/prisma/schema.prisma` if `dev` hangs on the pgbouncer pooler)
+5. `npm --workspace backend run seed`
+6. Apply migrations to the test DB:
+   ```bash
+   DOTENV_CONFIG_PATH=.env.test npx prisma migrate deploy --schema=backend/prisma/schema.prisma
+   DOTENV_CONFIG_PATH=.env.test cat <<'SQL' | npx prisma db execute --stdin --schema=backend/prisma/schema.prisma
+   ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fk_auth_users;
+   SQL
+   ```
+   The FK drop is a test-only adjustment so tests can insert profiles directly without going through Supabase Auth.
+7. Promote yourself to admin (after registering through the eventual frontend, or via Supabase Auth REST):
+   ```sql
+   UPDATE profiles SET role = 'admin' WHERE email = 'you@example.com';
+   ```
 
-Workspace layout: `shared/` (types + charging math), `frontend/`, `backend/`. Managed with npm workspaces.
+### Authentication
 
-## Architecture sketch
+The backend verifies Supabase-issued JWTs server-side using the project's published JWKS (asymmetric keys), so no shared secret is configured locally. `SUPABASE_JWKS_URL` points the verifier at the Supabase project's well-known JWKS endpoint.
 
+### Run
+
+```bash
+npm --workspace backend run dev   # http://localhost:4000
 ```
-React (Vite)  ──┬──▶  Express API  ──▶  Supabase Postgres
-                │           │
-                │           └──▶  1Hz timer: promotes reserved → charging
-                │
-                └──▶  Supabase Realtime channels (stations, reservations)
+
+### Tests
+
+```bash
+npm test
 ```
 
-- Frontend reads via Supabase anon key + Realtime; writes go through the Express backend (service-role key, bypasses RLS).
-- All business rules (queue, grace timer, validation) live server-side.
-- The 15s grace period is enforced by an idempotent 1Hz job, so restarts are safe.
+The backend Vitest config pins the suite to a single forked worker (`pool: 'forks'`, `singleFork: true`) because the integration tests share one Postgres test database; running them in parallel would cause cross-test interference.
 
-## Local development
+## Documentation
 
-1. Install Node.js ≥ 20, npm ≥ 10.
-2. Create a free-tier Supabase project; copy URL, anon key, service role key, JWT secret, and DB connection string.
-3. Clone the repo and copy `.env.example` to `.env`, then fill in values.
-4. Install dependencies: `npm install`.
-5. Apply migrations: `npm --workspace backend run prisma:migrate`.
-6. Seed car models: `npm --workspace backend run seed`.
-7. Start dev servers: `npm run dev` (frontend on `:5173`, backend on `:4000`).
-8. Promote yourself to admin via Supabase SQL: `UPDATE profiles SET role='admin' WHERE email='you@example.com';`.
+- Spec: `docs/superpowers/specs/2026-05-03-charging-station-design.md`
+- Phase 1 plan: `docs/superpowers/plans/2026-05-03-charging-station-phase-1-foundation-backend.md`
 
-## Status
-
-Thesis project — not intended for production use. Out of scope: real payments, native mobile, multi-city, multi-language, real EV hardware integration.
-
-## Author
-
-Danila Buret
+Note: the `docs/` directory is gitignored, so these files live in the working tree only and are not part of a fresh clone.

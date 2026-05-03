@@ -1,0 +1,8 @@
+{
+  "name": "@charging-station/frontend",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "test": "echo \"frontend tests come in phase 2\" && exit 0"
+  }
+}
