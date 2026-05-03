@@ -28,6 +28,13 @@ const Header = styled.div`
   gap: ${({ theme }) => theme.spacing(2)};
 `;
 
+const HeaderTopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing(2)};
+`;
+
 const HeaderTitle = styled.h2`
   margin: 0;
   font-size: 1rem;
@@ -36,6 +43,38 @@ const HeaderTitle = styled.h2`
 const HeaderSubtitle = styled.span`
   color: ${({ theme }) => theme.colors.textMuted};
   font-size: 0.75rem;
+`;
+
+const CollapseButton = styled.button<{ $collapsed: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: ${({ theme }) => theme.radii.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.textMuted};
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background ${({ theme }) => theme.transitions.fast},
+    border-color ${({ theme }) => theme.transitions.fast},
+    color ${({ theme }) => theme.transitions.fast};
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.primary};
+    border-color: ${({ theme }) => theme.colors.primary};
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: ${({ theme }) => theme.shadow.ring};
+  }
+
+  svg {
+    transition: transform ${({ theme }) => theme.transitions.base};
+    transform: rotate(${({ $collapsed }) => ($collapsed ? '180deg' : '0deg')});
+  }
 `;
 
 const List = styled.ul`
@@ -223,6 +262,7 @@ export function StationListSidebar({
   locationError,
 }: Props) {
   const [search, setSearch] = useState('');
+  const [collapsed, setCollapsed] = useState(false);
   const itemRefs = useRef<Map<number, HTMLLIElement>>(new Map());
   const { user } = useAuth();
   const { set: favoriteIds } = useFavorites();
@@ -261,88 +301,118 @@ export function StationListSidebar({
   return (
     <Wrap>
       <Header>
-        <HeaderTitle>Stații ({stations.length})</HeaderTitle>
-        <HeaderSubtitle>
-          {locationLoading
-            ? 'Detectez locația ta…'
-            : userLocation
-              ? 'Sortate după distanța față de tine'
-              : 'Sortate aproximativ după distanța de centrul Oradei'}
-        </HeaderSubtitle>
-        <Input
-          type="search"
-          placeholder="Caută stație după nume sau adresă…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        <HeaderTopRow>
+          <div>
+            <HeaderTitle>Stații ({stations.length})</HeaderTitle>
+            <HeaderSubtitle>
+              {locationLoading
+                ? 'Detectez locația ta…'
+                : userLocation
+                  ? 'Sortate după distanța față de tine'
+                  : 'Sortate aproximativ după distanța de centrul Oradei'}
+            </HeaderSubtitle>
+          </div>
+          <CollapseButton
+            type="button"
+            $collapsed={collapsed}
+            aria-label={collapsed ? 'Extinde lista' : 'Restrânge lista'}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Extinde lista' : 'Restrânge lista'}
+            onClick={() => setCollapsed((v) => !v)}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+          </CollapseButton>
+        </HeaderTopRow>
+        {!collapsed && (
+          <Input
+            type="search"
+            placeholder="Caută stație după nume sau adresă…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        )}
       </Header>
-      {locationError && !locationLoading && !userLocation && (
+      {!collapsed && locationError && !locationLoading && !userLocation && (
         <Notice>Locația nu e disponibilă: {locationError}</Notice>
       )}
-      <List>
-        {visible.length === 0 ? (
-          <Empty>
-            {search ? 'Nicio stație nu se potrivește.' : 'Nu există stații înregistrate.'}
-          </Empty>
-        ) : (
-          visible.map((s) => {
-            const status = statusFor(s);
-            const directionsHref = googleMapsDirections(
-              s.latitude,
-              s.longitude,
-              userLocation?.lat,
-              userLocation?.lon,
-            );
-            return (
-              <Item
-                key={s.id}
-                ref={(el) => {
-                  if (el) itemRefs.current.set(s.id, el);
-                  else itemRefs.current.delete(s.id);
-                }}
-                $selected={s.id === selectedId}
-                onClick={() => onSelect(s.id)}
-              >
-                <TopRow>
-                  <NameWrap>
-                    <Dot $status={status} />
-                    <Name>{s.name}</Name>
-                  </NameWrap>
-                  {user && (
-                    <FavButton
-                      type="button"
-                      $active={s.__isFavorite}
-                      aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                      title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
-                      }}
-                    >
-                      {s.__isFavorite ? '★' : '☆'}
-                    </FavButton>
-                  )}
-                </TopRow>
-                <Address>{s.address}</Address>
-                <MetaRow>
-                  <Power>{s.powerKw} kW</Power>
-                  <DirectionsGroup>
-                    {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
-                    <DirectionsLink
-                      href={directionsHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Google Maps ↗
-                    </DirectionsLink>
-                  </DirectionsGroup>
-                </MetaRow>
-              </Item>
-            );
-          })
-        )}
-      </List>
+      {!collapsed && (
+        <List>
+          {visible.length === 0 ? (
+            <Empty>
+              {search ? 'Nicio stație nu se potrivește.' : 'Nu există stații înregistrate.'}
+            </Empty>
+          ) : (
+            visible.map((s) => {
+              const status = statusFor(s);
+              const directionsHref = googleMapsDirections(
+                s.latitude,
+                s.longitude,
+                userLocation?.lat,
+                userLocation?.lon,
+              );
+              return (
+                <Item
+                  key={s.id}
+                  ref={(el) => {
+                    if (el) itemRefs.current.set(s.id, el);
+                    else itemRefs.current.delete(s.id);
+                  }}
+                  $selected={s.id === selectedId}
+                  onClick={() => onSelect(s.id)}
+                >
+                  <TopRow>
+                    <NameWrap>
+                      <Dot $status={status} />
+                      <Name>{s.name}</Name>
+                    </NameWrap>
+                    {user && (
+                      <FavButton
+                        type="button"
+                        $active={s.__isFavorite}
+                        aria-label={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                        title={s.__isFavorite ? 'Scoate de la favorite' : 'Adaugă la favorite'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleFav.mutate({ stationId: s.id, favorite: !s.__isFavorite });
+                        }}
+                      >
+                        {s.__isFavorite ? '★' : '☆'}
+                      </FavButton>
+                    )}
+                  </TopRow>
+                  <Address>{s.address}</Address>
+                  <MetaRow>
+                    <Power>{s.powerKw} kW</Power>
+                    <DirectionsGroup>
+                      {!origin.approximate && <Distance>{formatDistance(s.__distanceKm)}</Distance>}
+                      <DirectionsLink
+                        href={directionsHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Google Maps ↗
+                      </DirectionsLink>
+                    </DirectionsGroup>
+                  </MetaRow>
+                </Item>
+              );
+            })
+          )}
+        </List>
+      )}
     </Wrap>
   );
 }
