@@ -9,6 +9,7 @@ import { stationsRouter } from './routes/stations.js';
 import { reservationsRouter } from './routes/reservations.js';
 import { favoritesRouter } from './routes/favorites.js';
 import { adminRouter } from './routes/admin/index.js';
+import { debugRouter } from './routes/_debug.js';
 
 export function buildApp() {
   const app = express();
@@ -30,6 +31,7 @@ export function buildApp() {
   app.use('/api/reservations', reservationsRouter);
   app.use('/api/favorites', favoritesRouter);
   app.use('/api/admin', adminRouter);
+  app.use('/api/_debug', debugRouter);
 
   app.use(errorMiddleware);
   return app;
