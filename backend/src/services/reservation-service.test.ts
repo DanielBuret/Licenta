@@ -1,0 +1,100 @@
+// backend/src/services/reservation-service.test.ts
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
+import { reservationService } from './reservation-service.js';
+import { resetDb, makeUser, makeStation } from '../test/db.js';
+
+const ALICE = '00000000-0000-0000-0000-00000000A11C';
+const BOB = '00000000-0000-0000-0000-00000000B0B0';
+
+describe('reservationService.create', () => {
+  beforeAll(async () => {
+    await resetDb();
+  });
+
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it('creates a reservation at queue_position=1 when station empty', async () => {
+    await makeUser(ALICE);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 20,
+    });
+    expect(r.queuePosition).toBe(1);
+    expect(r.status).toBe('reserved');
+  });
+
+  it('creates queue_position=2 when an active row already exists', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    const st = await makeStation();
+    await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: BOB,
+      batteryLevelStart: 30,
+    });
+    expect(r.queuePosition).toBe(2);
+  });
+
+  it('rejects when station already has 2 active reservations', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    await makeUser('00000000-0000-0000-0000-00000000CCCC', 'C');
+    const st = await makeStation();
+    await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await reservationService.create({
+      stationId: st.id,
+      userId: BOB,
+      batteryLevelStart: 30,
+    });
+    await expect(
+      reservationService.create({
+        stationId: st.id,
+        userId: '00000000-0000-0000-0000-00000000CCCC',
+        batteryLevelStart: 50,
+      }),
+    ).rejects.toThrow(/full/i);
+  });
+
+  it('rejects when the user already holds an active reservation', async () => {
+    await makeUser(ALICE);
+    const s1 = await makeStation('S1');
+    const s2 = await makeStation('S2');
+    await reservationService.create({
+      stationId: s1.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await expect(
+      reservationService.create({
+        stationId: s2.id,
+        userId: ALICE,
+        batteryLevelStart: 20,
+      }),
+    ).rejects.toThrow(/already/i);
+  });
+
+  it('rejects invalid battery percent', async () => {
+    await makeUser(ALICE);
+    const st = await makeStation();
+    await expect(
+      reservationService.create({
+        stationId: st.id,
+        userId: ALICE,
+        batteryLevelStart: 100,
+      }),
+    ).rejects.toThrow();
+  });
+});
