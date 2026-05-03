@@ -47,6 +47,37 @@ The backend verifies Supabase-issued JWTs server-side using the project's publis
 npm --workspace backend run dev   # http://localhost:4000
 ```
 
+### Run (full stack)
+
+```bash
+# Terminal 1
+npm --workspace backend run dev   # http://localhost:4000
+
+# Terminal 2
+npm --workspace frontend run dev  # http://localhost:5173
+```
+
+Open http://localhost:5173. Register a user, then in Supabase SQL editor seed at least one station so the map has something to show:
+
+```sql
+INSERT INTO stations (name, address, latitude, longitude, power_kw)
+VALUES ('Lotus Center', 'Strada Nufărului', 47.058, 21.939, 50);
+```
+
+Refresh the home page; the green pin appears.
+
+### Realtime publication
+
+Phase 2 relies on Supabase Realtime. In Supabase Dashboard → Database → Replication, ensure both `reservations` and `stations` are part of the `supabase_realtime` publication. If not:
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE reservations, stations;
+```
+
+### Disable email confirmations (for thesis demo)
+
+Supabase Dashboard → Authentication → Providers → Email → toggle "Confirm email" off so registered users can sign in immediately without an email round-trip.
+
 ### Tests
 
 ```bash
