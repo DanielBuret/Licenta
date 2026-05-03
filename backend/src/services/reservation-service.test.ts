@@ -172,3 +172,71 @@ describe('reservationService.cancel', () => {
     ).rejects.toThrow(/terminal|already/i);
   });
 });
+
+describe('reservationService.finish', () => {
+  beforeEach(async () => {
+    await resetDb();
+  });
+
+  it('rejects finishing a row that is not in `charging`', async () => {
+    await makeUser(ALICE);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await expect(
+      reservationService.finish({ reservationId: r.id, callerId: ALICE }),
+    ).rejects.toThrow(/charging/i);
+  });
+
+  it('marks completed and promotes queue', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    const st = await makeStation();
+    const a = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    const b = await reservationService.create({
+      stationId: st.id,
+      userId: BOB,
+      batteryLevelStart: 30,
+    });
+    // Force `a` into charging directly (timer would normally do this)
+    await prisma.reservation.update({
+      where: { id: a.id },
+      data: { status: 'charging', chargingStartedAt: new Date() },
+    });
+
+    await reservationService.finish({ reservationId: a.id, callerId: ALICE });
+    const after = await prisma.reservation.findUnique({ where: { id: a.id } });
+    expect(after?.status).toBe('completed');
+    expect(after?.chargingEndedAt).not.toBeNull();
+
+    const promoted = await prisma.reservation.findUnique({
+      where: { id: b.id },
+    });
+    expect(promoted?.queuePosition).toBe(1);
+  });
+
+  it('rejects when caller is not owner', async () => {
+    await makeUser(ALICE);
+    await makeUser(BOB);
+    const st = await makeStation();
+    const r = await reservationService.create({
+      stationId: st.id,
+      userId: ALICE,
+      batteryLevelStart: 10,
+    });
+    await prisma.reservation.update({
+      where: { id: r.id },
+      data: { status: 'charging' },
+    });
+    await expect(reservationService.finish({ reservationId: r.id, callerId: BOB })).rejects.toThrow(
+      /owner|forbidden/i,
+    );
+  });
+});
